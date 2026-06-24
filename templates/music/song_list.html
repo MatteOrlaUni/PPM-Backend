@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Esplora Brani - Sonify{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Catalogo Brani</h1>
+    {% if user.is_authenticated and user.is_curator %}
+        <a href="{% url 'music:song_add' %}" class="btn btn-primary">+ Aggiungi Brano</a>
+    {% endif %}
+</div>
+
+<div class="card-grid">
+    {% for song in songs %}
+    <div class="card">
+        <h3>{{ song.title }}</h3>
+        <p>{{ song.artist }}</p>
+        <span class="tag">{{ song.genre.name }}</span>
+        
+        {% if song.external_link %}
+            <a href="{{ song.external_link }}" target="_blank" class="btn btn-primary" style="margin-top: 1rem; padding: 0.3rem 0.8rem; font-size: 0.8rem;">Ascolta Ora</a>
+        {% else %}
+            <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted);">Traccia Audio Simulata</p>
+        {% endif %}
+    </div>
+    {% empty %}
+    <p>Il catalogo è attualmente vuoto.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Una webapp premium per il Music Streaming Service.">
+    <title>{% block title %}Music Streaming{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{% url 'music:home' %}" class="nav-brand">Sonify</a>
+        <div class="nav-links">
+            <a href="{% url 'music:song_list' %}">Esplora</a>
+            {% if user.is_authenticated %}
+                {% if user.is_curator %}
+                    <a href="{% url 'music:song_add' %}">Aggiungi Brano</a>
+                {% endif %}
+                <span style="color: var(--text-muted);">Ciao, {{ user.username }} ({{ user.role|title }})</span>
+                <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary" style="background:transparent; border:1px solid var(--border-color);">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sonify Music. Progetto PPM.</p>
+    </footer>
+
+</body>
+</html>
