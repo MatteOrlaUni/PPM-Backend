@@ -1,0 +1,117 @@
+{% extends 'main.html' %}
+
+{% block title %}Catalogo{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+    <form method="get" action="{% url 'catalog_list' %}" style="display: flex; gap: 15px; width: 100%;" id="searchForm">
+        {% if adding_to_playlist %}
+            <input type="hidden" name="add_to_playlist" value="{{ adding_to_playlist.id }}">
+            <input type="hidden" name="type" value="song">
+            <select class="form-control-select" disabled>
+                <option>Canzone</option>
+            </select>
+        {% else %}
+            <select name="type" id="typeSelect" class="form-control-select" onchange="handleTypeChange()">
+                <option value="song" {% if search_type == 'song' %}selected{% endif %}>Canzone</option>
+                <option value="artist" {% if search_type == 'artist' %}selected{% endif %}>Artista</option>
+                <option value="playlist" {% if search_type == 'playlist' %}selected{% endif %}>Playlist</option>
+            </select>
+        {% endif %}
+        
+        <input type="text" name="q" placeholder="Cerca..." value="{{ q }}" class="form-control" style="flex: 1; border: 2px solid #800080;">
+        
+        {% if adding_to_playlist or search_type == 'song' or search_type == 'artist' %}
+            <select name="genre" id="genreSelect" class="form-control-select" {% if search_type == 'playlist' %}disabled{% endif %}>
+                <option value="">Genere</option>
+                {% for genre in genres %}
+                    <option value="{{ genre.id }}" {% if genre_id == genre.id|stringformat:"s" %}selected{% endif %}>{{ genre.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="artist" id="artistSelect" class="form-control-select" {% if search_type != 'song' %}disabled{% endif %}>
+                <option value="">Artista</option>
+                {% for a in popular_artists %}
+                    <option value="{{ a.id }}">{{ a.name }}</option>
+                {% endfor %}
+            </select>
+        {% else %}
+            <select name="genre" id="genreSelect" class="form-control-select" disabled>
+                <option value="">Genere</option>
+            </select>
+            <select name="artist" id="artistSelect" class="form-control-select" disabled>
+                <option value="">Artista</option>
+            </select>
+        {% endif %}
+
+        <button type="submit" class="btn-outline" style="flex: 0 0 auto;">Cerca</button>
+    </form>
+</div>
+
+<!-- Search Results / Playlist Add View -->
+{% if adding_to_playlist %}
+<form method="post" action="{% url 'playlist_bulk_save' adding_to_playlist.id %}">
+    {% csrf_token %}
+{% endif %}
+
+<div style="background: white; border: 2px solid #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <table class="catalog-list">
+        <tbody>
+            {% for item in items %}
+            <tr>
+                {% if adding_to_playlist %}
+                <td style="width: 30px;">
+                    <input type="checkbox" name="song_ids" value="{{ item.id }}" {% if item.in_playlist %}checked{% endif %} style="transform: scale(1.5);">
+                </td>
+                {% else %}
+                <td class="catalog-row-index">#{{ forloop.counter }}</td>
+                {% endif %}
+                
+                <td>
+                    <div class="catalog-row-details">
+                        {% if search_type == 'artist' %}
+                            <a href="{% url 'artist_detail' item.name %}" class="catalog-row-title">{{ item.name }}</a>
+                        {% elif search_type == 'playlist' %}
+                            <a href="{% url 'playlist_detail' item.id %}" class="catalog-row-title">{{ item.name }}</a>
+                            <span class="catalog-row-artist" style="color: #666;">Di {{ item.user.username }}</span>
+                        {% else %}
+                            <span class="catalog-row-title">{{ item.title }}</span>
+                            <span class="catalog-row-genre" style="color: #666;">{{ item.genre.name }}</span>
+                            <span class="catalog-row-artist" style="color: #666;">{{ item.artist.name }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" style="padding: 30px; text-align: center; color: #666;">Nessun risultato.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if adding_to_playlist %}
+    <div class="action-buttons" style="margin-top: 30px; max-width: 400px; margin-left: auto; margin-right: auto;">
+        <a href="{% url 'playlist_detail' adding_to_playlist.id %}" class="btn-outline" style="text-align: center;">Annulla</a>
+        <button type="submit" class="btn-outline">Salva modifiche</button>
+    </div>
+</form>
+{% endif %}
+
+<script>
+function handleTypeChange() {
+    const type = document.getElementById('typeSelect').value;
+    const genre = document.getElementById('genreSelect');
+    const artist = document.getElementById('artistSelect');
+    
+    if (type === 'playlist') {
+        genre.disabled = true;
+        artist.disabled = true;
+    } else if (type === 'artist') {
+        genre.disabled = false; // Genere utilizzabile
+        artist.disabled = true;
+    } else {
+        genre.disabled = false;
+        artist.disabled = false;
+    }
+}
+</script>
+{% endblock %}

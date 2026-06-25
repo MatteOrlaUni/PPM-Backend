@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block base_content %}
+<aside class="sidebar">
+    <div class="sidebar-top">
+        <h3>Playlist</h3>
+        {% if user.is_authenticated %}
+            {% for playlist in user.playlists.all %}
+                <a href="{% url 'playlist_detail' playlist.id %}" class="sidebar-playlist-item">{{ playlist.name }}</a>
+            {% empty %}
+                <div class="sidebar-message" style="color: #666;">Nessuna playlist creata.</div>
+            {% endfor %}
+            <div style="margin-top: 20px;">
+                <form method="post" action="{% url 'playlist_create' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-outline btn-new-playlist">+ Nuova Playlist</button>
+                </form>
+            </div>
+        {% else %}
+            <div class="sidebar-message">Accedi per visualizzare<br>le tue playlist</div>
+        {% endif %}
+    </div>
+    {% if user.is_authenticated %}
+    <div class="sidebar-bottom">
+        <div class="account-name">{{ user.username }}</div>
+        <div class="account-role">{{ user.get_role_display|default:user.role }}</div>
+    </div>
+    {% endif %}
+</aside>
+
+<div class="main-content">
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    {% block content %}
+    {% endblock %}
+</div>
+{% endblock %}

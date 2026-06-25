@@ -1,6 +1,6 @@
 # Sonify - Music Streaming Service
 
-**Studente:** Matteo (Modificare con i nomi effettivi se gruppo)
+**Studente:** Orlandi Matteo (Modificare con i nomi effettivi se gruppo)
 
 ## Project Information
 - **Chosen project type:** Full-Stack Web Application (Track 4: Music Streaming Service)
