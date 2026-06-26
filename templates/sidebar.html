@@ -1,4 +1,5 @@
 {% extends 'header.html' %}
+{% load static %}
 
 {% block base_content %}
 <aside class="column sidebar">
@@ -13,7 +14,7 @@
         <div style="margin-top: 20px;">
             <form method="post" action="{% url 'playlist_create' %}">
                 {% csrf_token %}
-                <button type="submit" class="btn-outline btn-new-playlist">+ Nuova Playlist</button>
+                <button type="submit" class="dark-btn border" style="width: 100%;">Nuova Playlist</button>
             </form>
         </div>
         {% else %}
@@ -21,9 +22,12 @@
         {% endif %}
     </div>
     {% if user.is_authenticated %}
-    <div class="sidebar-bottom">
-        <div class="account-name">{{ user.username }}</div>
-        <div class="account-role">{{ user.get_role_display|default:user.role }}</div>
+    <div class="sidebar-bottom border" style="padding: 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 15px;" onclick="window.location.href='{% url 'user_detail' user.username %}'">
+        <img src="{% static 'user.svg' %}" alt="User" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+        <div style="text-align: left;">
+            <div class="account-name">{{ user.username }}</div>
+            <div class="account-role">{{ user.get_role_display|default:user.role }}</div>
+        </div>
     </div>
     {% endif %}
 </aside>

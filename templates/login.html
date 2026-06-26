@@ -9,7 +9,7 @@
         style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #000000; padding: 30px; background: #fff;">
         <div class="auth-toggle" style="display: flex; margin-bottom: 2rem; border-bottom: 2px solid #000000;">
             <button id="btn-login" class="tab-btn active" onclick="showTab('login')"
-                style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; font-weight: bold; border-bottom: 4px solid #800080; margin-bottom: -3px;">Accedi</button>
+                style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; font-weight: bold; border-bottom: 4px solid #01161e; margin-bottom: -3px;">Accedi</button>
             <button id="btn-signup" class="tab-btn" onclick="showTab('signup')"
                 style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #666; font-weight: normal; border-bottom: 4px solid transparent; margin-bottom: -3px;">Registrati</button>
         </div>
@@ -28,17 +28,17 @@
 
                 <div class="form-group">
                     <label for="id_username">Username</label>
-                    <input type="text" name="username" id="id_username" class="form-control" required>
+                    <input type="text" name="username" id="id_username" class="form-control border" required>
                 </div>
 
                 <div class="form-group">
                     <label for="id_password">Password</label>
-                    <input type="password" name="password" id="id_password" class="form-control" required>
+                    <input type="password" name="password" id="id_password" class="form-control border" required>
                 </div>
 
                 <div class="action-buttons" style="margin-top: 30px;">
-                    <a href="{% url 'main' %}" class="btn-outline" style="text-align: center;">Annulla</a>
-                    <button type="submit" class="btn-outline">Accedi</button>
+                    <a href="{% url 'main' %}" class="light-btn border">Annulla</a>
+                    <button type="submit" class="dark-btn border">Accedi</button>
                 </div>
             </form>
 
@@ -64,8 +64,15 @@
                 {% for field in signup_form %}
                 <div class="form-group">
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {% if field.name == 'role' %}
+                    <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control-select border" style="width: 100%;" required>
+                        <option value="listener">Listener</option>
+                        <option value="curator">Curator</option>
+                    </select>
+                    {% else %}
                     <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.name }}"
-                        id="{{ field.id_for_label }}" class="form-control" required>
+                        id="{{ field.id_for_label }}" class="form-control border" required>
+                    {% endif %}
                     {% if field.help_text %}
                     <small style="color: #666; font-size: 0.8rem; display: block; margin-top: 5px;">{{
                         field.help_text|safe }}</small>
@@ -76,8 +83,8 @@
                 </div>
                 {% endfor %}
                 <div class="action-buttons" style="margin-top: 30px;">
-                    <a href="{% url 'main' %}" class="btn-outline" style="text-align: center;">Annulla</a>
-                    <button type="submit" class="btn-outline" style="background-color: #f0f0f0;">Crea Account</button>
+                    <a href="{% url 'main' %}" class="light-btn border">Annulla</a>
+                    <button type="submit" class="dark-btn border">Crea Account</button>
                 </div>
             </form>
         </div>
@@ -95,7 +102,7 @@
         if (tab === 'login') {
             btnLogin.style.fontWeight = 'bold';
             btnLogin.style.color = '#000';
-            btnLogin.style.borderBottom = '4px solid #800080';
+            btnLogin.style.borderBottom = '4px solid #01161e';
 
             btnSignup.style.fontWeight = 'normal';
             btnSignup.style.color = '#666';
@@ -103,7 +110,7 @@
         } else {
             btnSignup.style.fontWeight = 'bold';
             btnSignup.style.color = '#000';
-            btnSignup.style.borderBottom = '4px solid #800080';
+            btnSignup.style.borderBottom = '4px solid #01161e';
 
             btnLogin.style.fontWeight = 'normal';
             btnLogin.style.color = '#666';

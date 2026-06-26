@@ -11,8 +11,7 @@ chiaro: #aec3b0
 /* GENERALI                                                                             */
 /* ==================================================================================== */
 
-body,
-html {
+body, html {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -38,6 +37,67 @@ a {
     flex-direction: column;
 }
 
+.light-btn {
+    background: #ffffff;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s;
+    color: #01161e;
+    text-decoration: none;
+    box-sizing: border-box;
+    display: inline-block;
+}
+.light-btn:hover {
+    background: #01161e;
+    color: #ffffff;
+}
+
+.dark-btn {
+    background: #01161e;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s;
+    color: #ffffff;
+    text-decoration: none;
+    box-sizing: border-box;
+    display: inline-block;
+}
+.dark-btn:hover {
+    background: #ffffff;
+    color: #01161e;
+}
+
+.red-btn {
+    background: #ffffff;
+    border: 2px solid red;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s;
+    color: red;
+    border-radius: 8px;
+    text-decoration: none;
+    box-sizing: border-box;
+    display: inline-block;
+}
+.red-btn:hover {
+    background: red;
+    color: #ffffff;
+}
+
+.border {
+    border: 2px solid #01161e;
+    border-radius: 8px;
+}
+
 
 /* ==================================================================================== */
 /* HEADER                                                                               */
@@ -58,33 +118,6 @@ a {
     letter-spacing: -0.5px;
 }
 
-.nav-links .btn {
-    border: 2px solid #01161e;
-    padding: 8px 18px;
-    background: #ffffff;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    color: #01161e;
-    text-decoration: none;
-}
-
-.nav-links .btn:hover {
-    background: #01161e;
-    color: #ffffff;
-}
-
-.nav-links .btn-solid {
-    background: #01161e;
-    color: #ffffff;
-}
-
-.nav-links .btn-solid:hover {
-    background: #ffffff;
-    color: #01161e;
-}
 
 /* Layout */
 .app-container {
@@ -127,14 +160,12 @@ a {
     font-size: 15px;
     color: #495057;
 }
-
 .sidebar-playlist-item::before {
     content: "▶";
     font-size: 10px;
     margin-right: 10px;
     color: #1db954;
 }
-
 .sidebar-playlist-item:hover {
     color: #1db954;
 }
@@ -146,8 +177,7 @@ a {
 }
 
 .sidebar-bottom {
-    border-top: 1px solid #dee2e6;
-    padding-top: 20px;
+    padding: 15px 20px;
 }
 
 .account-name {
@@ -211,6 +241,7 @@ a {
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
 .card-img.artist {
@@ -255,8 +286,6 @@ a {
 .form-control {
     width: 100%;
     padding: 12px 15px;
-    border: 2px solid #800080;
-    border-radius: 8px;
     box-sizing: border-box;
     font-family: inherit;
     font-size: 15px;
@@ -265,13 +294,11 @@ a {
 
 .form-control:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(128, 0, 128, 0.1);
+    box-shadow: 0 0 0 3px rgba(1, 22, 30, 0.1);
 }
 
 .form-control-select {
-    border: 2px solid #01161e;
     padding: 10px 15px;
-    border-radius: 8px;
     font-size: 15px;
     font-weight: 600;
     font-family: inherit;
@@ -293,38 +320,6 @@ a {
     gap: 15px;
 }
 
-.btn-outline {
-    background: #ffffff;
-    border: 2px solid #01161e;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    flex: 1;
-    text-align: center;
-    transition: all 0.2s;
-    color: #01161e;
-    text-decoration: none;
-    box-sizing: border-box;
-}
-
-.btn-outline:hover {
-    background: #01161e;
-    color: #ffffff;
-}
-
-.btn-new-playlist {
-    border-color: #01161e;
-    color: #01161e;
-    width: 100%;
-}
-
-.btn-new-playlist:hover {
-    background: #01161e;
-    border-color: #01161e;
-    color: #ffffff;
-}
 
 /* Catalog Table / List */
 .filter-bar {
@@ -356,12 +351,7 @@ a {
 }
 
 .catalog-list tr:hover {
-    background-color: #f8f9fa;
-}
-
-.catalog-row-index {
-    font-weight: 600;
-    color: #adb5bd;
+    background-color: #f3f3f3;
 }
 
 .catalog-row-details {
@@ -392,8 +382,11 @@ a {
     height: 220px;
     background-color: #1db954;
     border-radius: 12px;
+    display: flex;
+    align-items: center;
     justify-content: center;
     box-shadow: 0 10px 30px rgba(29, 185, 84, 0.3);
+    overflow: hidden;
 }
 
 .item-cover.artist {

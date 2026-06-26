@@ -16,14 +16,14 @@
             <a href="{% url 'main' %}" style="color: #01161e; font-weight: bold; text-decoration: none;">FreeMusic.com</a>
         </div>
         <div class="nav-links row" style="gap: 10px;">
-            <a href="{% url 'catalog_list' %}" class="btn">Catalogo</a>
+            <a href="{% url 'catalog_list' %}" class="light-btn border">Catalogo</a>
             {% if user.is_authenticated %}
             <form action="{% url 'logout' %}" method="post" style="display:inline; margin: 0;">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-solid">Logout</button>
+                <button type="submit" class="dark-btn border">Logout</button>
             </form>
             {% else %}
-            <a href="{% url 'login' %}" class="btn btn-solid">Login</a>
+            <a href="{% url 'login' %}" class="dark-btn border">Login</a>
             {% endif %}
         </div>
     </nav>

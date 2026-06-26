@@ -14,6 +14,7 @@ urlpatterns = [
     path('playlists/<int:pk>/', views.PlaylistDetailView.as_view(), name='playlist_detail'),
     path('playlists/<int:pk>/edit_inline/', views.PlaylistEditInlineView.as_view(), name='playlist_edit_inline'),
     path('playlists/create/', views.PlaylistCreateView.as_view(), name='playlist_create'),
+    path('playlists/<int:pk>/delete/', views.PlaylistDeleteView.as_view(), name='playlist_delete'),
     
     path('playlists/add_song/<int:song_id>/', views.AddSongToPlaylistView.as_view(), name='playlist_add_song'),
     path('playlists/<int:playlist_id>/remove_song/<int:song_id>/', views.RemoveSongFromPlaylistView.as_view(), name='playlist_remove_song'),
@@ -23,6 +24,10 @@ urlpatterns = [
     path('artist/<str:name>/', views.ArtistDetailView.as_view(), name='artist_detail'),
     path('artist/<str:name>/edit_inline/', views.ArtistEditInlineView.as_view(), name='artist_edit_inline'),
 
+    path('genre/<str:name>/', views.GenreDetailView.as_view(), name='genre_detail'),
+    path('genre/<str:name>/edit_inline/', views.GenreEditInlineView.as_view(), name='genre_edit_inline'),
+
     path('user/<str:username>/', views.UserDetailView.as_view(), name='user_detail'),
     path('user/<str:username>/edit_inline/', views.UserEditInlineView.as_view(), name='user_edit_inline'),
+    path('user/delete', views.UserDeleteView.as_view(), name='user_delete'),
 ]

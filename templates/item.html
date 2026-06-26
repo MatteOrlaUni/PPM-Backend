@@ -1,4 +1,5 @@
 {% extends 'sidebar.html' %}
+{% load static %}
 
 {% block title %}FreeMusic{% endblock %}
 
@@ -6,15 +7,16 @@
 <div class="item-header"
     style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 2px solid #000; margin-bottom: 30px;">
     <div class="row item-cover {% if cover_type == 'artist' or cover_type == 'user' %}artist{% else %}song{% endif %}">
-        {% if cover_type == 'artist' or cover_type == 'user' %}
-        <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" width="80" height="80">
-            <path
-                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-        </svg>
+        {% if cover_type == 'user' %}
+        <img src="{% static 'user.svg' %}" alt="User cover" style="width: 100%; height: 100%; object-fit: cover;">
+        {% elif cover_type == 'artist' %}
+        <img src="{% static 'artist.svg' %}" alt="Artist cover" style="width: 100%; height: 100%; object-fit: cover;">
+        {% elif cover_type == 'playlist' %}
+        <img src="{% static 'playlist.svg' %}" alt="Playlist cover" style="width: 100%; height: 100%; object-fit: cover;">
+        {% elif cover_type == 'genre' %}
+        <img src="{% static 'genre.svg' %}" alt="Genre cover" style="width: 100%; height: 100%; object-fit: cover;">
         {% else %}
-        <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" width="80" height="80">
-            <path d="M9 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3v-7h8v2h-6v7c0 1.66-1.34 3-3 3z" />
-        </svg>
+        <img src="{% static 'song.svg' %}" alt="Song cover" style="width: 100%; height: 100%; object-fit: cover;">
         {% endif %}
     </div>
     <div class="item-info">
@@ -33,25 +35,21 @@
             {% if cover_type == 'user' %}
             <div class="form-group">
                 <label>Username</label>
-                <input type="text" name="new_title" value="{{ title }}" class="form-control"
-                    style="border-color: #800080;">
+                <input type="text" name="new_title" value="{{ title }}" class="form-control border">
             </div>
             <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Nuova password..." class="form-control"
-                    style="border-color: #800080;">
+                <label>Nuova Password</label>
+                <input type="text" name="password" placeholder="Inserisci per cambiarla..." class="form-control border">
             </div>
             {% else %}
             <div class="form-group">
                 <label>Nome</label>
-                <input type="text" name="new_title" value="{{ title }}" class="form-control"
-                    style="border-color: #800080;">
+                <input type="text" name="new_title" value="{{ title }}" class="form-control border">
             </div>
             {% endif %}
             <div style="display: flex; gap: 10px;">
-                <button type="submit" class="btn-outline">Salva</button>
-                <button type="button" class="btn-outline" style="background: #f0f0f0;"
-                    onclick="toggleEdit()">Annulla</button>
+                <button type="button" class="light-btn border" onclick="toggleEdit()" style="font-weight: normal;">Annulla</button>
+                <button type="submit" class="dark-btn border">Salva</button>
             </div>
         </form>
         {% endif %}
@@ -60,14 +58,20 @@
 
 {% if can_edit %}
 <div class="action-buttons" id="action-buttons" style="margin-bottom: 30px; justify-content: flex-start;">
-    <button class="btn-outline" onclick="toggleEdit()" style="flex: 0 0 auto;">Modifica</button>
+    <button class="light-btn border" onclick="toggleEdit()" style="font-weight: normal;">Modifica</button>
     {% if item_type == 'song' and cover_type == 'playlist' %}
-    <a href="{% url 'catalog_list' %}?add_to_playlist={{ playlist_id }}" class="btn-outline"
-        style="flex: 0 0 auto;">Modifica Brani</a>
+    <a href="{% url 'catalog_list' %}?add_to_playlist={{ playlist_id }}" class="light-btn border">Modifica Brani</a>
     {% endif %}
-    {% if cover_type == 'playlist' or cover_type == 'user' %}
-    <button type="button" class="btn-outline" style="flex: 0 0 auto; border-color: red; color: red;"
-        onclick="alert('Funzione di eliminazione simulata.')">Elimina</button>
+    {% if cover_type == 'playlist' %}
+    <form method="post" action="{% url 'playlist_delete' playlist_id %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questa playlist?')">Elimina</button>
+    </form>
+    {% elif cover_type == 'user' %}
+    <form method="post" action="{% url 'user_delete' %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questo profilo?')">Elimina</button>
+    </form>
     {% endif %}
 </div>
 {% endif %}
@@ -79,7 +83,7 @@
     <table class="catalog-list">
         <tbody>
             {% for item in items %}
-            <tr>
+            <tr {% if item_type == 'playlist' %}onclick="window.location.href='{% url 'playlist_detail' item.id %}'" style="cursor: pointer;"{% endif %}>
                 <td class="catalog-row-index">#{{ forloop.counter }}</td>
                 <td>
                     <div class="catalog-row-details">
@@ -97,8 +101,7 @@
                     <form method="post" action="{% url 'playlist_remove_song' playlist_id item.id %}"
                         style="margin: 0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn-outline"
-                            style="padding: 5px 10px; border-color: red; color: red;">Rimuovi</button>
+                        <button type="submit" class="red-btn" style="padding: 5px 10px;">Rimuovi</button>
                     </form>
                     {% endif %}
                 </td>

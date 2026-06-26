@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Q
-from django.contrib.auth import get_user_model, login, authenticate
+from django.contrib.auth import get_user_model, login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse
 from .models import Song, Genre, Playlist, Artist
@@ -58,39 +58,26 @@ class CatalogListView(ListView):
     def get_queryset(self):
         q = self.request.GET.get('q', '')
         search_type = self.request.GET.get('type', 'song')
-        genre_id = self.request.GET.get('genre')
 
-        if search_type == 'playlist':
-            if self.request.user.is_authenticated:
-                if self.request.user.is_curator():
-                    queryset = Playlist.objects.all().order_by('-created_at')
-                else:
-                    queryset = Playlist.objects.filter(user=self.request.user).order_by('-created_at')
-            else:
-                queryset = Playlist.objects.none()
+        if search_type == 'genre':
+            queryset = Genre.objects.all().order_by('name')
             if q:
                 queryset = queryset.filter(name__icontains=q)
         elif search_type == 'artist':
             queryset = Artist.objects.all().order_by('-created_at')
             if q:
-                queryset = queryset.filter(name__icontains=q)
-            if genre_id:
-                queryset = queryset.filter(songs__genre_id=genre_id).distinct()
+                queryset = queryset.filter(Q(name__icontains=q) | Q(songs__genre__name__icontains=q)).distinct()
         else: # song
             queryset = Song.objects.all().order_by('-created_at')
             if q:
-                queryset = queryset.filter(Q(title__icontains=q) | Q(artist__name__icontains=q))
-            if genre_id:
-                queryset = queryset.filter(genre_id=genre_id)
+                queryset = queryset.filter(Q(title__icontains=q) | Q(artist__name__icontains=q) | Q(genre__name__icontains=q))
         
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['genres'] = Genre.objects.all()
         context['search_type'] = self.request.GET.get('type', 'song')
         context['q'] = self.request.GET.get('q', '')
-        context['genre_id'] = self.request.GET.get('genre', '')
         
         playlist_id = self.request.GET.get('add_to_playlist')
         if playlist_id and self.request.user.is_authenticated:
@@ -153,6 +140,16 @@ class PlaylistCreateView(LoginRequiredMixin, View):
     def post(self, request):
         playlist = Playlist.objects.create(name="Nuova Playlist", user=request.user)
         return redirect('playlist_detail', pk=playlist.id)
+
+class PlaylistDeleteView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        playlist = get_object_or_404(Playlist, pk=pk)
+        if playlist.user == request.user or request.user.is_curator():
+            playlist.delete()
+            messages.success(request, "Playlist eliminata con successo.")
+        else:
+            messages.error(request, "Azione non consentita.")
+        return redirect('main')
 
 class AddSongToPlaylistView(LoginRequiredMixin, View):
     def post(self, request, song_id):
@@ -235,6 +232,37 @@ class ArtistEditInlineView(LoginRequiredMixin, View):
                 return redirect('artist_detail', name=new_name)
         return redirect('artist_detail', name=name)
 
+class GenreDetailView(LoginRequiredMixin, TemplateView):
+    template_name = 'item.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        genre_name = self.kwargs['name']
+        genre = get_object_or_404(Genre, name=genre_name)
+        songs = Song.objects.filter(genre=genre).order_by('-created_at')
+        context['title'] = genre.name
+        context['subtitle'] = f"{songs.count()} brani nel catalogo"
+        context['cover_type'] = 'genre'
+        context['type_label'] = 'Genere'
+        context['items'] = songs
+        context['item_type'] = 'song'
+        context['can_edit'] = self.request.user.is_curator()
+        context['can_remove_item'] = False
+        context['edit_url'] = reverse('genre_edit_inline', args=[genre.name])
+        return context
+
+class GenreEditInlineView(LoginRequiredMixin, View):
+    def post(self, request, name):
+        genre = get_object_or_404(Genre, name=name)
+        if request.user.is_curator():
+            new_name = request.POST.get('new_title')
+            if new_name and new_name != name:
+                genre.name = new_name
+                genre.save()
+                return redirect('genre_detail', name=new_name)
+        return redirect('genre_detail', name=name)
+
+
 class UserDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'item.html'
 
@@ -252,6 +280,7 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
         context['can_edit'] = self.request.user.is_curator() or self.request.user == user
         context['can_remove_item'] = False
         context['edit_url'] = reverse('user_edit_inline', args=[user.username])
+        context['list_title'] = "Playlist"
         return context
 
 class UserEditInlineView(LoginRequiredMixin, View):
@@ -259,11 +288,33 @@ class UserEditInlineView(LoginRequiredMixin, View):
         user = get_object_or_404(get_user_model(), username=username)
         if request.user.is_curator() or request.user == user:
             new_username = request.POST.get('new_title')
+            new_password = request.POST.get('password')
+            
+            updated = False
             if new_username and new_username != username:
                 if not get_user_model().objects.filter(username=new_username).exists():
                     user.username = new_username
-                    user.save()
-                    return redirect('user_detail', username=new_username)
+                    updated = True
                 else:
                     messages.error(request, "Username già in uso.")
+            
+            if new_password:
+                user.set_password(new_password)
+                updated = True
+                # Keep user logged in if they changed their own password
+                if request.user == user:
+                    login(request, user)
+                    
+            if updated:
+                user.save()
+                return redirect('user_detail', username=user.username)
+
         return redirect('user_detail', username=username)
+
+class UserDeleteView(LoginRequiredMixin, View):
+    def post(self, request):
+        user = request.user
+        logout(request)
+        user.delete()
+        return redirect('main')
+
