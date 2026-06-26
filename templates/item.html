@@ -1,47 +1,57 @@
-{% extends 'main.html' %}
+{% extends 'sidebar.html' %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}FreeMusic{% endblock %}
 
 {% block content %}
-<div class="item-header" style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 2px solid #000; margin-bottom: 30px;">
-    <div class="item-cover {% if cover_type == 'artist' or cover_type == 'user' %}artist{% else %}song{% endif %}">
+<div class="item-header"
+    style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 2px solid #000; margin-bottom: 30px;">
+    <div class="row item-cover {% if cover_type == 'artist' or cover_type == 'user' %}artist{% else %}song{% endif %}">
         {% if cover_type == 'artist' or cover_type == 'user' %}
-            <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" width="80" height="80"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" width="80" height="80">
+            <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+        </svg>
         {% else %}
-            <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" width="80" height="80"><path d="M9 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3v-7h8v2h-6v7c0 1.66-1.34 3-3 3z"/></svg>
+        <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" width="80" height="80">
+            <path d="M9 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3v-7h8v2h-6v7c0 1.66-1.34 3-3 3z" />
+        </svg>
         {% endif %}
     </div>
     <div class="item-info">
         <h1 id="title-display">{{ title }}</h1>
         <div class="item-meta" style="color: #666;">
             {% if cover_type == 'artist' %}
-                {% for item in items|slice:":3" %}{{ item.genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {% for item in items|slice:":3" %}{{ item.genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
             {% else %}
-                {{ subtitle }}
+            {{ subtitle }}
             {% endif %}
         </div>
-        
+
         {% if can_edit %}
         <form id="edit-form" method="post" action="{{ edit_url }}" style="display: none; margin: 20px 0;">
             {% csrf_token %}
             {% if cover_type == 'user' %}
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" name="new_title" value="{{ title }}" class="form-control" style="border-color: #800080;">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="Nuova password..." class="form-control" style="border-color: #800080;">
-                </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="new_title" value="{{ title }}" class="form-control"
+                    style="border-color: #800080;">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Nuova password..." class="form-control"
+                    style="border-color: #800080;">
+            </div>
             {% else %}
-                <div class="form-group">
-                    <label>Nome</label>
-                    <input type="text" name="new_title" value="{{ title }}" class="form-control" style="border-color: #800080;">
-                </div>
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="new_title" value="{{ title }}" class="form-control"
+                    style="border-color: #800080;">
+            </div>
             {% endif %}
             <div style="display: flex; gap: 10px;">
                 <button type="submit" class="btn-outline">Salva</button>
-                <button type="button" class="btn-outline" style="background: #f0f0f0;" onclick="toggleEdit()">Annulla</button>
+                <button type="button" class="btn-outline" style="background: #f0f0f0;"
+                    onclick="toggleEdit()">Annulla</button>
             </div>
         </form>
         {% endif %}
@@ -52,17 +62,20 @@
 <div class="action-buttons" id="action-buttons" style="margin-bottom: 30px; justify-content: flex-start;">
     <button class="btn-outline" onclick="toggleEdit()" style="flex: 0 0 auto;">Modifica</button>
     {% if item_type == 'song' and cover_type == 'playlist' %}
-        <a href="{% url 'catalog_list' %}?add_to_playlist={{ playlist_id }}" class="btn-outline" style="flex: 0 0 auto;">Modifica Brani</a>
+    <a href="{% url 'catalog_list' %}?add_to_playlist={{ playlist_id }}" class="btn-outline"
+        style="flex: 0 0 auto;">Modifica Brani</a>
     {% endif %}
     {% if cover_type == 'playlist' or cover_type == 'user' %}
-        <button type="button" class="btn-outline" style="flex: 0 0 auto; border-color: red; color: red;" onclick="alert('Funzione di eliminazione simulata.')">Elimina</button>
+    <button type="button" class="btn-outline" style="flex: 0 0 auto; border-color: red; color: red;"
+        onclick="alert('Funzione di eliminazione simulata.')">Elimina</button>
     {% endif %}
 </div>
 {% endif %}
 
 <h2>{{ list_title|default:"Brani" }}</h2>
 
-<div style="background: white; border: 2px solid #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+<div
+    style="background: white; border: 2px solid #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
     <table class="catalog-list">
         <tbody>
             {% for item in items %}
@@ -71,19 +84,21 @@
                 <td>
                     <div class="catalog-row-details">
                         {% if item_type == 'playlist' %}
-                            <a href="{% url 'playlist_detail' item.id %}" class="catalog-row-title">{{ item.name }}</a>
-                            <span class="catalog-row-artist" style="color: #666;">{{ item.songs.count }} brani</span>
+                        <a href="{% url 'playlist_detail' item.id %}" class="catalog-row-title">{{ item.name }}</a>
+                        <span class="catalog-row-artist" style="color: #666;">{{ item.songs.count }} brani</span>
                         {% else %}
-                            <span class="catalog-row-title">{{ item.title }}</span>
-                            <span class="catalog-row-genre" style="color: #666;">{{ item.genre.name }}</span>
+                        <span class="catalog-row-title">{{ item.title }}</span>
+                        <span class="catalog-row-genre" style="color: #666;">{{ item.genre.name }}</span>
                         {% endif %}
                     </div>
                 </td>
                 <td style="text-align: right;">
                     {% if can_remove_item %}
-                    <form method="post" action="{% url 'playlist_remove_song' playlist_id item.id %}" style="margin: 0;">
+                    <form method="post" action="{% url 'playlist_remove_song' playlist_id item.id %}"
+                        style="margin: 0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn-outline" style="padding: 5px 10px; border-color: red; color: red;">Rimuovi</button>
+                        <button type="submit" class="btn-outline"
+                            style="padding: 5px 10px; border-color: red; color: red;">Rimuovi</button>
                     </form>
                     {% endif %}
                 </td>
@@ -99,21 +114,21 @@
 
 {% if can_edit %}
 <script>
-function toggleEdit() {
-    var display = document.getElementById('title-display');
-    var form = document.getElementById('edit-form');
-    var actions = document.getElementById('action-buttons');
-    
-    if (form.style.display === 'none') {
-        form.style.display = 'block';
-        display.style.display = 'none';
-        actions.style.display = 'none';
-    } else {
-        form.style.display = 'none';
-        display.style.display = 'block';
-        actions.style.display = 'flex';
+    function toggleEdit() {
+        var display = document.getElementById('title-display');
+        var form = document.getElementById('edit-form');
+        var actions = document.getElementById('action-buttons');
+
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            display.style.display = 'none';
+            actions.style.display = 'none';
+        } else {
+            form.style.display = 'none';
+            display.style.display = 'block';
+            actions.style.display = 'flex';
+        }
     }
-}
 </script>
 {% endif %}
 {% endblock %}

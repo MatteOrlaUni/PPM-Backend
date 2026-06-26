@@ -43,11 +43,11 @@ def auth_view(request):
     return render(request, 'login.html', context)
 
 class HomeView(TemplateView):
-    template_name = 'home.html'
+    template_name = 'main.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['new_releases'] = Song.objects.all().order_by('-created_at')[:8]
+        context['new_releases'] = Song.objects.all().order_by('-created_at')[:5]
         context['popular_artists'] = Artist.objects.all().order_by('name')[:8]
         return context
 

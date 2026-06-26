@@ -4,7 +4,7 @@ from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
-    path('', views.HomeView.as_view(), name='home'),
+    path('', views.HomeView.as_view(), name='main'),
     
     path('login/', views.auth_view, name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='catalog_list'), name='logout'),

@@ -1,28 +1,29 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="column">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Una webapp premium per il Music Streaming Service.">
-    <title>{% block title %}NomeSito{% endblock %}</title>
+    <title>{% block title %}FreeMusic{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
 
-<body>
-    <nav class="navbar">
-        <div class="nav-brand">NomeSito</div>
-        <div class="nav-links">
-            <a href="{% url 'home' %}" class="btn">Home</a>
+<body class="column">
+    <nav class="row navbar">
+        <div class="nav-brand">
+            <a href="{% url 'main' %}" style="color: #01161e; font-weight: bold; text-decoration: none;">FreeMusic.com</a>
+        </div>
+        <div class="nav-links row" style="gap: 10px;">
             <a href="{% url 'catalog_list' %}" class="btn">Catalogo</a>
             {% if user.is_authenticated %}
-            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+            <form action="{% url 'logout' %}" method="post" style="display:inline; margin: 0;">
                 {% csrf_token %}
-                <button type="submit" class="btn">Logout</button>
+                <button type="submit" class="btn btn-solid">Logout</button>
             </form>
             {% else %}
-            <a href="{% url 'login' %}" class="btn">Login / Registrati</a>
+            <a href="{% url 'login' %}" class="btn btn-solid">Login</a>
             {% endif %}
         </div>
     </nav>

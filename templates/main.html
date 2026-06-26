@@ -1,45 +1,32 @@
-{% extends 'base.html' %}
+{% extends 'sidebar.html' %}
 
-{% block base_content %}
-<aside class="sidebar">
-    <div class="sidebar-top">
-        <h3>Playlist</h3>
-        {% if user.is_authenticated %}
-            {% for playlist in user.playlists.all %}
-                <a href="{% url 'playlist_detail' playlist.id %}" class="sidebar-playlist-item">{{ playlist.name }}</a>
-            {% empty %}
-                <div class="sidebar-message" style="color: #666;">Nessuna playlist creata.</div>
-            {% endfor %}
-            <div style="margin-top: 20px;">
-                <form method="post" action="{% url 'playlist_create' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-outline btn-new-playlist">+ Nuova Playlist</button>
-                </form>
-            </div>
-        {% else %}
-            <div class="sidebar-message">Accedi per visualizzare<br>le tue playlist</div>
-        {% endif %}
-    </div>
-    {% if user.is_authenticated %}
-    <div class="sidebar-bottom">
-        <div class="account-name">{{ user.username }}</div>
-        <div class="account-role">{{ user.get_role_display|default:user.role }}</div>
-    </div>
-    {% endif %}
-</aside>
+{% block title %}FreeMusic{% endblock %}
 
-<div class="main-content">
-    {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+{% block content %}
+<h2>Nuove Uscite</h2>
+<div class="horizontal-list">
+    {% for song in new_releases|slice:":5" %}
+    <div class="column card">
+        <div class="card-img song">
         </div>
-    {% endif %}
-    
-    {% block content %}
-    {% endblock %}
+        <p class="card-title">{{ song.title }}</p>
+        <p class="card-subtitle">{{ song.artist.name }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<h2>Artisti popolari</h2>
+<div class="horizontal-list">
+    {% for artist in popular_artists %}
+    <a href="{% url 'artist_detail' artist.name %}" class="card">
+        <div class="card-img artist">
+            <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)" width="40" height="40">
+                <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
+        </div>
+        <p class="card-title" style="text-align: center;">{{ artist.name }}</p>
+    </a>
+    {% endfor %}
 </div>
 {% endblock %}

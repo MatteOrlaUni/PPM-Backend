@@ -1,24 +1,29 @@
-{% extends 'base.html' %}
+{% extends 'header.html' %}
 
-{% block title %}Login{% endblock %}
+{% block title %}FreeMusic{% endblock %}
 
 {% block base_content %}
-<div class="main-content" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #f5f5f5 0%, #ffffff 100%);">
-    <div class="form-container" style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #000000; padding: 30px; background: #fff;">
+<div class="main-content"
+    style="display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #f5f5f5 0%, #ffffff 100%);">
+    <div class="form-container"
+        style="width: 100%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #000000; padding: 30px; background: #fff;">
         <div class="auth-toggle" style="display: flex; margin-bottom: 2rem; border-bottom: 2px solid #000000;">
-            <button id="btn-login" class="tab-btn active" onclick="showTab('login')" style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; font-weight: bold; border-bottom: 4px solid #800080; margin-bottom: -3px;">Accedi</button>
-            <button id="btn-signup" class="tab-btn" onclick="showTab('signup')" style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #666; font-weight: normal; border-bottom: 4px solid transparent; margin-bottom: -3px;">Registrati</button>
+            <button id="btn-login" class="tab-btn active" onclick="showTab('login')"
+                style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; font-weight: bold; border-bottom: 4px solid #800080; margin-bottom: -3px;">Accedi</button>
+            <button id="btn-signup" class="tab-btn" onclick="showTab('signup')"
+                style="flex: 1; padding: 1rem; background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #666; font-weight: normal; border-bottom: 4px solid transparent; margin-bottom: -3px;">Registrati</button>
         </div>
 
         <!-- Modulo Login -->
-        <div id="form-login" style="display: {% if active_tab == 'login' or not active_tab %}block{% else %}none{% endif %};">
+        <div id="form-login"
+            style="display: {% if active_tab == 'login' or not active_tab %}block{% else %}none{% endif %};">
             <h2 style="margin-top: 0; display: none;">Login</h2>
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="login">
-                
+
                 {% if login_form.non_field_errors %}
-                    <p style="color: red;">{{ login_form.non_field_errors.0 }}</p>
+                <p style="color: red;">{{ login_form.non_field_errors.0 }}</p>
                 {% endif %}
 
                 <div class="form-group">
@@ -32,7 +37,7 @@
                 </div>
 
                 <div class="action-buttons" style="margin-top: 30px;">
-                    <a href="{% url 'home' %}" class="btn-outline" style="text-align: center;">Annulla</a>
+                    <a href="{% url 'main' %}" class="btn-outline" style="text-align: center;">Annulla</a>
                     <button type="submit" class="btn-outline">Accedi</button>
                 </div>
             </form>
@@ -51,25 +56,27 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="signup">
-                
+
                 {% if signup_form.non_field_errors %}
-                    <p style="color: red;">{{ signup_form.non_field_errors.0 }}</p>
+                <p style="color: red;">{{ signup_form.non_field_errors.0 }}</p>
                 {% endif %}
 
                 {% for field in signup_form %}
-                    <div class="form-group">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control" required>
-                        {% if field.help_text %}
-                            <small style="color: #666; font-size: 0.8rem; display: block; margin-top: 5px;">{{ field.help_text|safe }}</small>
-                        {% endif %}
-                        {% for error in field.errors %}
-                            <p style="color: red; font-size: 0.8rem;">{{ error }}</p>
-                        {% endfor %}
-                    </div>
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.name }}"
+                        id="{{ field.id_for_label }}" class="form-control" required>
+                    {% if field.help_text %}
+                    <small style="color: #666; font-size: 0.8rem; display: block; margin-top: 5px;">{{
+                        field.help_text|safe }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <p style="color: red; font-size: 0.8rem;">{{ error }}</p>
+                    {% endfor %}
+                </div>
                 {% endfor %}
                 <div class="action-buttons" style="margin-top: 30px;">
-                    <a href="{% url 'home' %}" class="btn-outline" style="text-align: center;">Annulla</a>
+                    <a href="{% url 'main' %}" class="btn-outline" style="text-align: center;">Annulla</a>
                     <button type="submit" class="btn-outline" style="background-color: #f0f0f0;">Crea Account</button>
                 </div>
             </form>
@@ -81,15 +88,15 @@
     function showTab(tab) {
         document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
         document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
-        
+
         const btnLogin = document.getElementById('btn-login');
         const btnSignup = document.getElementById('btn-signup');
-        
+
         if (tab === 'login') {
             btnLogin.style.fontWeight = 'bold';
             btnLogin.style.color = '#000';
             btnLogin.style.borderBottom = '4px solid #800080';
-            
+
             btnSignup.style.fontWeight = 'normal';
             btnSignup.style.color = '#666';
             btnSignup.style.borderBottom = '4px solid transparent';
@@ -97,7 +104,7 @@
             btnSignup.style.fontWeight = 'bold';
             btnSignup.style.color = '#000';
             btnSignup.style.borderBottom = '4px solid #800080';
-            
+
             btnLogin.style.fontWeight = 'normal';
             btnLogin.style.color = '#666';
             btnLogin.style.borderBottom = '4px solid transparent';
