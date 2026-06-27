@@ -100,6 +100,9 @@ class CatalogListView(ListView):
             if self.request.user.is_curator():
                 context['all_genres'] = Genre.objects.all().order_by('name')
                 context['all_artists'] = Artist.objects.all().order_by('name')
+                context['existing_artists_json'] = json.dumps(list(Artist.objects.values_list('name', flat=True)))
+                context['existing_genres_json'] = json.dumps(list(Genre.objects.values_list('name', flat=True)))
+                context['existing_songs_json'] = json.dumps([{"title": s.title, "artist_id": str(s.artist_id)} for s in Song.objects.all()])
             
         context['popular_artists'] = Artist.objects.all().order_by('name')
         
@@ -123,6 +126,7 @@ class PlaylistDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context['can_remove_item'] = playlist.user == self.request.user
         context['edit_url'] = reverse('playlist_edit_inline', args=[playlist.id])
         context['playlist_id'] = playlist.id
+        context['existing_names'] = json.dumps(list(Playlist.objects.filter(user=playlist.user).exclude(id=playlist.id).values_list('name', flat=True)))
         return context
 
     def test_func(self):
@@ -138,14 +142,20 @@ class PlaylistEditInlineView(LoginRequiredMixin, View):
         playlist = get_object_or_404(Playlist, pk=pk)
         if playlist.user == request.user or request.user.is_curator():
             new_title = request.POST.get('new_title')
-            if new_title:
-                playlist.name = new_title
-                playlist.save()
+            if new_title and new_title != playlist.name:
+                if not Playlist.objects.filter(user=playlist.user, name=new_title).exists():
+                    playlist.name = new_title
+                    playlist.save()
         return redirect('playlist_detail', pk=pk)
 
 class PlaylistCreateView(LoginRequiredMixin, View):
     def post(self, request):
-        playlist = Playlist.objects.create(name="Nuova Playlist", user=request.user)
+        existing_names = set(Playlist.objects.filter(user=request.user).values_list('name', flat=True))
+        prog = 0
+        while f"Nuova Playlist [{prog}]" in existing_names:
+            prog += 1
+        name = f"Nuova Playlist [{prog}]"
+        playlist = Playlist.objects.create(name=name, user=request.user)
         return redirect('playlist_detail', pk=playlist.id)
 
 class PlaylistDeleteView(LoginRequiredMixin, View):
@@ -408,7 +418,8 @@ class AdminSongCreateView(LoginRequiredMixin, View):
                 try:
                     artist = Artist.objects.get(id=artist_id)
                     genre = Genre.objects.get(id=genre_id)
-                    Song.objects.create(title=title, artist=artist, genre=genre)
+                    if not Song.objects.filter(title__iexact=title, artist=artist).exists():
+                        Song.objects.create(title=title, artist=artist, genre=genre)
                 except (Artist.DoesNotExist, Genre.DoesNotExist, ValueError):
                     pass
         return redirect('/catalogue/?type=song')

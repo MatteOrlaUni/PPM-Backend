@@ -86,24 +86,24 @@
                             {% if search_type == 'artist' %}
                             <form method="post" action="{% url 'admin_artist_create' %}" id="create-form" style="margin: 0; width: 100%;">
                                 {% csrf_token %}
-                                <input type="text" name="name" placeholder="Nome Artista" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <input type="text" name="name" placeholder="Nome Artista" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" oninput="checkArtistUniqueness(this)">
                             </form>
                             {% elif search_type == 'genre' %}
                             <form method="post" action="{% url 'admin_genre_create' %}" id="create-form" style="margin: 0; width: 100%;">
                                 {% csrf_token %}
-                                <input type="text" name="name" placeholder="Nome Genere" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <input type="text" name="name" placeholder="Nome Genere" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" oninput="checkGenreUniqueness(this)">
                             </form>
                             {% elif search_type == 'song' %}
-                            <form method="post" action="{% url 'admin_song_create' %}" id="create-form" style="margin: 0; width: 100%; display: flex; gap: 10px;">
+                            <form method="post" action="{% url 'admin_song_create' %}" id="create-form" style="margin: 0; width: 100%; display: flex; gap: 10px;" oninput="checkSongUniqueness()">
                                 {% csrf_token %}
-                                <input type="text" name="title" placeholder="Titolo Brano" required style="flex: 2; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <input type="text" id="song-title-input" name="title" placeholder="Titolo Brano" required style="flex: 2; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                 <select name="genre" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                                     <option value="" disabled selected>Genere</option>
                                     {% for g in all_genres %}
                                     <option value="{{ g.id }}">{{ g.name }}</option>
                                     {% endfor %}
                                 </select>
-                                <select name="artist" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <select id="song-artist-select" name="artist" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onchange="checkSongUniqueness()">
                                     <option value="" disabled selected>Artista</option>
                                     {% for a in all_artists %}
                                     <option value="{{ a.id }}">{{ a.name }}</option>
@@ -200,5 +200,46 @@
 </form>
 {% endif %}
 
+
+{% if search_type == 'artist' or search_type == 'genre' or search_type == 'song' %}
+<script>
+    {% if search_type == 'artist' %}
+    const existingArtists = {{ existing_artists_json|safe }}.map(x => x.toLowerCase());
+    function checkArtistUniqueness(input) {
+        if (existingArtists.includes(input.value.trim().toLowerCase())) {
+            input.setCustomValidity("Artista già esistente.");
+        } else {
+            input.setCustomValidity("");
+        }
+    }
+    {% elif search_type == 'genre' %}
+    const existingGenres = {{ existing_genres_json|safe }}.map(x => x.toLowerCase());
+    function checkGenreUniqueness(input) {
+        if (existingGenres.includes(input.value.trim().toLowerCase())) {
+            input.setCustomValidity("Genere già esistente.");
+        } else {
+            input.setCustomValidity("");
+        }
+    }
+    {% elif search_type == 'song' %}
+    const existingSongs = {{ existing_songs_json|safe }};
+    function checkSongUniqueness() {
+        const titleInput = document.getElementById('song-title-input');
+        const artistSelect = document.getElementById('song-artist-select');
+        if (!titleInput || !artistSelect) return;
+        
+        const title = titleInput.value.trim().toLowerCase();
+        const artistId = artistSelect.value;
+        
+        const exists = existingSongs.some(s => s.title.toLowerCase() === title && s.artist_id === artistId);
+        if (exists) {
+            titleInput.setCustomValidity("Canzone già esistente, cambia titolo o artista.");
+        } else {
+            titleInput.setCustomValidity("");
+        }
+    }
+    {% endif %}
+</script>
+{% endif %}
 
 {% endblock %}
