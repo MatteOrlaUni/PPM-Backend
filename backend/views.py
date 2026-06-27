@@ -67,6 +67,10 @@ class CatalogListView(ListView):
             queryset = Artist.objects.all().order_by('-created_at')
             if q:
                 queryset = queryset.filter(Q(name__icontains=q) | Q(songs__genre__name__icontains=q)).distinct()
+        elif search_type == 'user' and self.request.user.is_authenticated and self.request.user.is_curator():
+            queryset = get_user_model().objects.all().order_by('username')
+            if q:
+                queryset = queryset.filter(username__icontains=q)
         else: # song
             queryset = Song.objects.all().order_by('-created_at')
             if q:
@@ -93,6 +97,9 @@ class CatalogListView(ListView):
 
         if self.request.user.is_authenticated:
             context['user_playlists'] = Playlist.objects.filter(user=self.request.user)
+            if self.request.user.is_curator():
+                context['all_genres'] = Genre.objects.all().order_by('name')
+                context['all_artists'] = Artist.objects.all().order_by('name')
             
         context['popular_artists'] = Artist.objects.all().order_by('name')
         
@@ -232,6 +239,20 @@ class ArtistEditInlineView(LoginRequiredMixin, View):
                 return redirect('artist_detail', name=new_name)
         return redirect('artist_detail', name=name)
 
+class AdminArtistDeleteView(LoginRequiredMixin, View):
+    def post(self, request, name):
+        if not request.user.is_curator():
+            return redirect('main')
+            
+        artist = get_object_or_404(Artist, name=name)
+        artist.delete()
+        
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('catalog_list')
+
+
 class GenreDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'item.html'
 
@@ -318,3 +339,76 @@ class UserDeleteView(LoginRequiredMixin, View):
         user.delete()
         return redirect('main')
 
+class AdminUserDeleteView(LoginRequiredMixin, View):
+    def post(self, request, username):
+        if not request.user.is_curator():
+            return redirect('main')
+            
+        target_user = get_object_or_404(get_user_model(), username=username)
+        # Prevent deleting yourself through this route just in case
+        if target_user == request.user:
+            return redirect('catalog_list')
+            
+        target_user.delete() # Playlists will be deleted on cascade
+        
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('catalog_list')
+
+class AdminGenreDeleteView(LoginRequiredMixin, View):
+    def post(self, request, name):
+        if not request.user.is_curator():
+            return redirect('main')
+            
+        genre = get_object_or_404(Genre, name=name)
+        genre.delete()
+        
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('catalog_list')
+
+class AdminSongDeleteView(LoginRequiredMixin, View):
+    def post(self, request, id):
+        if not request.user.is_curator():
+            return redirect('main')
+            
+        song = get_object_or_404(Song, id=id)
+        song.delete()
+        
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('catalog_list')
+
+class AdminArtistCreateView(LoginRequiredMixin, View):
+    def post(self, request):
+        if request.user.is_curator():
+            name = request.POST.get('name')
+            if name:
+                Artist.objects.get_or_create(name=name)
+        return redirect('/catalogue/?type=artist')
+
+class AdminGenreCreateView(LoginRequiredMixin, View):
+    def post(self, request):
+        if request.user.is_curator():
+            name = request.POST.get('name')
+            if name:
+                Genre.objects.get_or_create(name=name)
+        return redirect('/catalogue/?type=genre')
+
+class AdminSongCreateView(LoginRequiredMixin, View):
+    def post(self, request):
+        if request.user.is_curator():
+            title = request.POST.get('title')
+            artist_id = request.POST.get('artist')
+            genre_id = request.POST.get('genre')
+            if title and artist_id and genre_id:
+                try:
+                    artist = Artist.objects.get(id=artist_id)
+                    genre = Genre.objects.get(id=genre_id)
+                    Song.objects.create(title=title, artist=artist, genre=genre)
+                except (Artist.DoesNotExist, Genre.DoesNotExist, ValueError):
+                    pass
+        return redirect('/catalogue/?type=song')

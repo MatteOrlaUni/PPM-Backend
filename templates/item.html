@@ -48,7 +48,7 @@
             </div>
             {% endif %}
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="light-btn border" onclick="toggleEdit()" style="font-weight: normal;">Annulla</button>
+                <button type="button" class="light-btn border" onclick="toggleEdit()">Annulla</button>
                 <button type="submit" class="dark-btn border">Salva</button>
             </div>
         </form>
@@ -58,7 +58,7 @@
 
 {% if can_edit %}
 <div class="action-buttons" id="action-buttons" style="margin-bottom: 30px; justify-content: flex-start;">
-    <button class="light-btn border" onclick="toggleEdit()" style="font-weight: normal;">Modifica</button>
+    <button class="light-btn border" onclick="toggleEdit()">Modifica</button>
     {% if item_type == 'song' and cover_type == 'playlist' %}
     <a href="{% url 'catalog_list' %}?add_to_playlist={{ playlist_id }}" class="light-btn border">Modifica Brani</a>
     {% endif %}
@@ -71,6 +71,11 @@
     <form method="post" action="{% url 'user_delete' %}" style="margin: 0;">
         {% csrf_token %}
         <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questo profilo?')">Elimina</button>
+    </form>
+    {% elif cover_type == 'artist' %}
+    <form method="post" action="{% url 'admin_artist_delete' title %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questo artista e tutti i suoi brani?')">Elimina</button>
     </form>
     {% endif %}
 </div>

@@ -88,9 +88,15 @@ a {
     box-sizing: border-box;
     display: inline-block;
 }
-.red-btn:hover {
+.red-btn:hover:not(:disabled) {
     background: red;
     color: #ffffff;
+}
+.red-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #999;
+    color: #999;
 }
 
 .border {
@@ -161,10 +167,9 @@ a {
     color: #495057;
 }
 .sidebar-playlist-item::before {
-    content: "▶";
+    content: "";
     font-size: 10px;
     margin-right: 10px;
-    color: #1db954;
 }
 .sidebar-playlist-item:hover {
     color: #1db954;

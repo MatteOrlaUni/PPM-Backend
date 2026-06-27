@@ -16,6 +16,9 @@
             <option value="song" {% if search_type == 'song' %}selected{% endif %}>Canzone</option>
             <option value="artist" {% if search_type == 'artist' %}selected{% endif %}>Artista</option>
             <option value="genre" {% if search_type == 'genre' %}selected{% endif %}>Genere</option>
+            {% if user.is_authenticated and user.is_curator %}
+            <option value="user" {% if search_type == 'user' %}selected{% endif %}>● Utente</option>
+            {% endif %}
         </select>
         {% endif %}
 
@@ -32,12 +35,92 @@
     {% csrf_token %}
     {% endif %}
 
-    <div
-        style="background: white; border: 2px solid #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <div style="background: white; border: 2px solid #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
         <table class="catalog-list">
+            <thead>
+                <tr style="border-bottom: 2px solid #000; background-color: #f8f9fa;">
+                    <th style="padding: 15px; width: 30px; color: #6c757d; font-weight: 600; text-align: left; text-transform: uppercase; font-size: 13px;">
+                        {% if adding_to_playlist %}
+                        <input type="checkbox" disabled style="opacity: 0;">
+                        {% endif %}
+                    </th>
+                    <th style="padding: 20px; font-weight: 600; text-align: left; text-transform: uppercase; font-size: 16px;">
+                        <div class="catalog-row-details">
+                            {% if search_type == 'artist' %}
+                            <span class="catalog-row-title" style="color: inherit; font-size: inherit; font-weight: inherit;">Artista</span>
+                            <span class="catalog-row-artist" style="color: inherit; font-size: inherit; font-weight: inherit;">Brani Associati</span>
+                            {% elif search_type == 'genre' %}
+                            <span class="catalog-row-title" style="color: inherit; font-size: inherit; font-weight: inherit;">Genere</span>
+                            <span class="catalog-row-artist" style="color: inherit; font-size: inherit; font-weight: inherit;">Brani Associati</span>
+                            {% elif search_type == 'user' %}
+                            <span class="catalog-row-title" style="color: inherit; font-size: inherit; font-weight: inherit;">Username</span>
+                            <span class="catalog-row-genre" style="color: inherit; font-size: inherit; font-weight: inherit;">Ruolo</span>
+                            <span class="catalog-row-artist" style="color: inherit; font-size: inherit; font-weight: inherit;">Playlist Create</span>
+                            {% else %}
+                            <span class="catalog-row-title" style="color: inherit; font-size: inherit; font-weight: inherit;">Titolo</span>
+                            <span class="catalog-row-genre" style="color: inherit; font-size: inherit; font-weight: inherit;">Genere</span>
+                            <span class="catalog-row-artist" style="color: inherit; font-size: inherit; font-weight: inherit;">Artista</span>
+                            {% endif %}
+                        </div>
+                    </th>
+                    {% if user.is_authenticated and user.is_curator and not adding_to_playlist %}
+                    <th style="width: 100px; text-align: right; padding-right: 15px;">
+                        {% if search_type != 'user' and search_type != 'playlist' %}
+                        <button class="light-btn" style="padding: 5px 15px; font-size: 14px; border-radius: 8px; border: 2px solid #01161e;" onclick="document.getElementById('create-row').style.display = document.getElementById('create-row').style.display === 'none' ? 'table-row' : 'none';">Nuovo</button>
+                        {% endif %}
+                    </th>
+                    {% endif %}
+                </tr>
+            </thead>
             <tbody>
+                {% if user.is_authenticated and user.is_curator and search_type != 'user' and search_type != 'playlist' and not adding_to_playlist %}
+                <tr id="create-row" style="display: none; background-color: #f8f9fa;">
+                    {% if adding_to_playlist %}
+                    <td></td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                    
+                    <td>
+                        <div class="catalog-row-details">
+                            {% if search_type == 'artist' %}
+                            <form method="post" action="{% url 'admin_artist_create' %}" id="create-form" style="margin: 0; width: 100%;">
+                                {% csrf_token %}
+                                <input type="text" name="name" placeholder="Nome Artista" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </form>
+                            {% elif search_type == 'genre' %}
+                            <form method="post" action="{% url 'admin_genre_create' %}" id="create-form" style="margin: 0; width: 100%;">
+                                {% csrf_token %}
+                                <input type="text" name="name" placeholder="Nome Genere" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            </form>
+                            {% elif search_type == 'song' %}
+                            <form method="post" action="{% url 'admin_song_create' %}" id="create-form" style="margin: 0; width: 100%; display: flex; gap: 10px;">
+                                {% csrf_token %}
+                                <input type="text" name="title" placeholder="Titolo Brano" required style="flex: 2; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <select name="genre" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="" disabled selected>Genere</option>
+                                    {% for g in all_genres %}
+                                    <option value="{{ g.id }}">{{ g.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="artist" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="" disabled selected>Artista</option>
+                                    {% for a in all_artists %}
+                                    <option value="{{ a.id }}">{{ a.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                    
+                    <td style="width: 100px; text-align: right; padding-right: 15px;">
+                        <button type="submit" form="create-form" class="light-btn" style="padding: 5px 15px; font-size: 14px; border-radius: 8px; border: 2px solid #01161e;">Salva</button>
+                    </td>
+                </tr>
+                {% endif %}
                 {% for item in items %}
-                <tr {% if search_type == 'artist' %}onclick="window.location.href='{% url 'artist_detail' item.name %}'" style="cursor: pointer;"{% elif search_type == 'playlist' %}onclick="window.location.href='{% url 'playlist_detail' item.id %}'" style="cursor: pointer;"{% elif search_type == 'genre' %}onclick="window.location.href='{% url 'genre_detail' item.name %}'" style="cursor: pointer;"{% endif %}>
+                <tr {% if search_type == 'artist' %}onclick="window.location.href='{% url 'artist_detail' item.name %}'" style="cursor: pointer;"{% elif search_type == 'playlist' %}onclick="window.location.href='{% url 'playlist_detail' item.id %}'" style="cursor: pointer;"{% elif search_type == 'genre' %}onclick="window.location.href='{% url 'genre_detail' item.name %}'" style="cursor: pointer;"{% elif search_type == 'user' %}onclick="window.location.href='{% url 'user_detail' item.username %}'" style="cursor: pointer;"{% endif %}>
                     {% if adding_to_playlist %}
                     <td style="width: 30px;">
                         <input type="checkbox" name="song_ids" value="{{ item.id }}" {% if item.in_playlist %}checked{% endif %} style="transform: scale(1.5);">
@@ -50,12 +133,17 @@
                         <div class="catalog-row-details">
                             {% if search_type == 'artist' %}
                             <a href="{% url 'artist_detail' item.name %}" class="catalog-row-title">{{ item.name }}</a>
+                            <span class="catalog-row-artist">{{ item.songs.count }} brani</span>
                             {% elif search_type == 'playlist' %}
                             <a href="{% url 'playlist_detail' item.id %}" class="catalog-row-title">{{ item.name }}</a>
                             <span class="catalog-row-artist">Di {{ item.user.username }}</span>
                             {% elif search_type == 'genre' %}
                             <a href="{% url 'genre_detail' item.name %}" class="catalog-row-title">{{ item.name }}</a>
                             <span class="catalog-row-artist">{{ item.songs.count }} brani</span>
+                            {% elif search_type == 'user' %}
+                            <a href="{% url 'user_detail' item.username %}" class="catalog-row-title">{{ item.username }}{% if item.username == user.username %} (Tu){% endif %}</a>
+                            <span class="catalog-row-genre">Ruolo: {{ item.get_role_display|default:item.role }}</span>
+                            <span class="catalog-row-artist">{{ item.playlists.count }} playlist create</span>
                             {% else %}
                             <span class="catalog-row-title">{{ item.title }}</span>
                             <span class="catalog-row-genre">{{ item.genre.name }}</span>
@@ -63,6 +151,36 @@
                             {% endif %}
                         </div>
                     </td>
+
+                    {% if user.is_authenticated and user.is_curator and not adding_to_playlist %}
+                    <td style="width: 100px; text-align: right; padding-right: 15px;">
+                        {% if search_type == 'user' %}
+                        <form method="post" action="{% url 'admin_user_delete' item.username %}" style="margin:0; display: inline-block;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo utente e tutte le sue playlist?');" {% if item.username == user.username %}disabled{% endif %}>Elimina</button>
+                        </form>
+                        {% elif search_type == 'artist' %}
+                        <form method="post" action="{% url 'admin_artist_delete' item.name %}" style="margin:0; display: inline-block;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo artista e tutti i suoi brani?');">Elimina</button>
+                        </form>
+                        {% elif search_type == 'genre' %}
+                        <form method="post" action="{% url 'admin_genre_delete' item.name %}" style="margin:0; display: inline-block;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo genere e tutti i brani associati?');">Elimina</button>
+                        </form>
+                        {% elif search_type == 'song' %}
+                        <form method="post" action="{% url 'admin_song_delete' item.id %}" style="margin:0; display: inline-block;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo brano?');">Elimina</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
