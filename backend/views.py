@@ -186,43 +186,12 @@ class PlaylistDeleteView(LoginRequiredMixin, View):
             messages.error(request, "Azione non consentita.")
         return redirect('main')
 
-class AddSongToPlaylistView(LoginRequiredMixin, View):
-    def post(self, request, song_id):
-        playlist_id = request.POST.get('playlist_id')
-        if playlist_id:
-            playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
-            song = get_object_or_404(Song, id=song_id)
-            playlist.songs.add(song)
-            messages.success(request, f"'{song.title}' aggiunto a {playlist.name}")
-        return redirect('catalog_list')
-
 class RemoveSongFromPlaylistView(LoginRequiredMixin, View):
     def post(self, request, playlist_id, song_id):
         playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
         song = get_object_or_404(Song, id=song_id)
         playlist.songs.remove(song)
         return redirect('playlist_detail', pk=playlist_id)
-
-class TogglePlaylistSongView(LoginRequiredMixin, View):
-    def post(self, request, playlist_id, song_id):
-        playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)
-        song = get_object_or_404(Song, id=song_id)
-        
-        try:
-            data = json.loads(request.body)
-            add = data.get('add', True)
-        except:
-            add = True
-
-        if add:
-            playlist.songs.add(song)
-            status = 'added'
-        else:
-            playlist.songs.remove(song)
-            status = 'removed'
-            
-        return JsonResponse({'status': status, 'song_id': song.id})
-
 class PlaylistBulkSaveView(LoginRequiredMixin, View):
     def post(self, request, playlist_id):
         playlist = get_object_or_404(Playlist, id=playlist_id, user=request.user)

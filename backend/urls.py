@@ -17,9 +17,7 @@ urlpatterns = [
     path('playlists/create/', views.PlaylistCreateView.as_view(), name='playlist_create'),
     path('playlists/<int:pk>/delete/', views.PlaylistDeleteView.as_view(), name='playlist_delete'),
     
-    path('playlists/add_song/<int:song_id>/', views.AddSongToPlaylistView.as_view(), name='playlist_add_song'),
     path('playlists/<int:playlist_id>/remove_song/<int:song_id>/', views.RemoveSongFromPlaylistView.as_view(), name='playlist_remove_song'),
-    path('playlists/<int:playlist_id>/toggle_song/<int:song_id>/', views.TogglePlaylistSongView.as_view(), name='playlist_toggle_song'),
     path('playlists/<int:playlist_id>/bulk_save/', views.PlaylistBulkSaveView.as_view(), name='playlist_bulk_save'),
 
     path('artist/<str:name>/', views.ArtistDetailView.as_view(), name='artist_detail'),
