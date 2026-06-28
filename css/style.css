@@ -434,3 +434,7 @@ a {
     color: #0f5132;
     border: 1px solid #badbcc;
 }
+
+/* Inline Edit */
+.catalog-list tr:hover .song-number { display: none; }
+.catalog-list tr:hover .song-edit-icon { display: inline-block !important; }

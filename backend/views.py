@@ -1,19 +1,22 @@
 import json
+import urllib.parse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView, DetailView, View, TemplateView
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Q
-from django.contrib.auth import get_user_model, login, authenticate, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse
 from .models import Song, Genre, Playlist, Artist
 from .forms import CustomUserCreationForm
 
 def auth_view(request):
+    next_url = request.GET.get('next') or request.POST.get('next') or 'main'
+    
     if request.user.is_authenticated:
-        return redirect('catalog_list')
+        return redirect(next_url)
         
     login_form = AuthenticationForm(request)
     signup_form = CustomUserCreationForm()
@@ -26,21 +29,36 @@ def auth_view(request):
             if login_form.is_valid():
                 user = login_form.get_user()
                 login(request, user)
-                return redirect('catalog_list')
+                return redirect(next_url)
         elif action == 'signup':
             active_tab = 'signup'
             signup_form = CustomUserCreationForm(request.POST)
             if signup_form.is_valid():
                 user = signup_form.save()
                 login(request, user)
-                return redirect('catalog_list')
+                return redirect(next_url)
                 
     context = {
         'login_form': login_form,
         'signup_form': signup_form,
         'active_tab': active_tab,
+        'next': request.GET.get('next', ''),
     }
     return render(request, 'login.html', context)
+
+def custom_logout_view(request):
+    referer = request.META.get('HTTP_REFERER')
+    logout(request)
+    if referer:
+        try:
+            path = urllib.parse.urlparse(referer).path
+            match = resolve(path)
+            public_views = ['main', 'catalog_list', 'artist_detail', 'genre_detail']
+            if match.url_name in public_views:
+                return redirect(referer)
+        except Exception:
+            pass
+    return redirect('main')
 
 class HomeView(TemplateView):
     template_name = 'main.html'
@@ -102,7 +120,7 @@ class CatalogListView(ListView):
                 context['all_artists'] = Artist.objects.all().order_by('name')
                 context['existing_artists_json'] = json.dumps(list(Artist.objects.values_list('name', flat=True)))
                 context['existing_genres_json'] = json.dumps(list(Genre.objects.values_list('name', flat=True)))
-                context['existing_songs_json'] = json.dumps([{"title": s.title, "artist_id": str(s.artist_id)} for s in Song.objects.all()])
+                context['existing_songs_json'] = json.dumps([{"id": s.id, "title": s.title, "artist_id": str(s.artist_id)} for s in Song.objects.all()])
             
         context['popular_artists'] = Artist.objects.all().order_by('name')
         
@@ -219,7 +237,7 @@ class PlaylistBulkSaveView(LoginRequiredMixin, View):
         messages.success(request, "Playlist aggiornata con successo.")
         return redirect('playlist_detail', pk=playlist_id)
 
-class ArtistDetailView(LoginRequiredMixin, TemplateView):
+class ArtistDetailView(TemplateView):
     template_name = 'item.html'
 
     def get_context_data(self, **kwargs):
@@ -230,10 +248,12 @@ class ArtistDetailView(LoginRequiredMixin, TemplateView):
         context['title'] = artist.name
         context['subtitle'] = f"{songs.count()} brani nel catalogo"
         context['cover_type'] = 'artist'
+        genres = songs.order_by().values_list('genre__name', flat=True).distinct()[:3]
+        context['artist_genres'] = ", ".join(genres)
         context['type_label'] = 'Artista'
         context['items'] = songs
         context['item_type'] = 'song'
-        context['can_edit'] = self.request.user.is_curator()
+        context['can_edit'] = self.request.user.is_authenticated and self.request.user.is_curator()
         context['can_remove_item'] = False
         context['edit_url'] = reverse('artist_edit_inline', args=[artist.name])
         return context
@@ -263,7 +283,7 @@ class AdminArtistDeleteView(LoginRequiredMixin, View):
         return redirect('catalog_list')
 
 
-class GenreDetailView(LoginRequiredMixin, TemplateView):
+class GenreDetailView(TemplateView):
     template_name = 'item.html'
 
     def get_context_data(self, **kwargs):
@@ -277,7 +297,7 @@ class GenreDetailView(LoginRequiredMixin, TemplateView):
         context['type_label'] = 'Genere'
         context['items'] = songs
         context['item_type'] = 'song'
-        context['can_edit'] = self.request.user.is_curator()
+        context['can_edit'] = self.request.user.is_authenticated and self.request.user.is_curator()
         context['can_remove_item'] = False
         context['edit_url'] = reverse('genre_edit_inline', args=[genre.name])
         return context
@@ -422,4 +442,28 @@ class AdminSongCreateView(LoginRequiredMixin, View):
                         Song.objects.create(title=title, artist=artist, genre=genre)
                 except (Artist.DoesNotExist, Genre.DoesNotExist, ValueError):
                     pass
+        return redirect('/catalogue/?type=song')
+
+class AdminSongUpdateView(LoginRequiredMixin, View):
+    def post(self, request, id):
+        if request.user.is_curator():
+            song = get_object_or_404(Song, id=id)
+            title = request.POST.get('title')
+            artist_id = request.POST.get('artist')
+            genre_id = request.POST.get('genre')
+            if title and artist_id and genre_id:
+                try:
+                    artist = Artist.objects.get(id=artist_id)
+                    genre = Genre.objects.get(id=genre_id)
+                    # Check uniqueness excluding this song itself
+                    if not Song.objects.exclude(id=id).filter(title__iexact=title, artist=artist).exists():
+                        song.title = title
+                        song.artist = artist
+                        song.genre = genre
+                        song.save()
+                except (Artist.DoesNotExist, Genre.DoesNotExist, ValueError):
+                    pass
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
         return redirect('/catalogue/?type=song')

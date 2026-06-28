@@ -21,6 +21,9 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="login">
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
 
                 {% if login_form.non_field_errors %}
                 <p style="color: red;">{{ login_form.non_field_errors.0 }}</p>
@@ -40,15 +43,12 @@
                     <a href="{% url 'main' %}" class="light-btn border">Annulla</a>
                     <button type="submit" class="dark-btn border">Accedi</button>
                 </div>
+                
+                <div style="margin-top: 20px; font-size: 14px; color: #666;">
+                    <p style="margin: 0;"><strong>Curator:</strong> utente1 / password1</p>
+                    <p style="margin: 0;"><strong>Listener:</strong> utente2 / password2</p>
+                </div>
             </form>
-
-            <div class="debug-users" style="margin-top: 40px; border-top: 2px solid #000000; padding-top: 20px;">
-                <h4 style="margin-top:0;">Utenti esistenti:</h4>
-                <ul style="list-style: none; padding-left: 0">
-                    <li>- utente1 / password1 (Curator)</li>
-                    <li>- utente2 / password2 (Listener)</li>
-                </ul>
-            </div>
         </div>
 
         <!-- Modulo Signup -->
@@ -56,6 +56,9 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="signup">
+                {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
 
                 {% if signup_form.non_field_errors %}
                 <p style="color: red;">{{ signup_form.non_field_errors.0 }}</p>

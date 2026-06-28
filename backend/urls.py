@@ -1,16 +1,15 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
-from django.views.generic import RedirectView
 from . import views
 
 urlpatterns = [
     path('', views.HomeView.as_view(), name='main'),
     
     path('login/', views.auth_view, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='catalog_list'), name='logout'),
+    path('logout/', views.custom_logout_view, name='logout'),
     
     path('catalogue/', views.CatalogListView.as_view(), name='catalog_list'),
     path('admin/song/create/', views.AdminSongCreateView.as_view(), name='admin_song_create'),
+    path('admin/song/<int:id>/update/', views.AdminSongUpdateView.as_view(), name='admin_song_update'),
     path('admin/song/<int:id>/delete/', views.AdminSongDeleteView.as_view(), name='admin_song_delete'),
     
     path('playlists/<int:pk>/', views.PlaylistDetailView.as_view(), name='playlist_detail'),

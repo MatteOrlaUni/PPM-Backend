@@ -1,4 +1,5 @@
 {% extends 'sidebar.html' %}
+{% load static %}
 
 {% block title %}Catalogo{% endblock %}
 
@@ -126,7 +127,14 @@
                         <input type="checkbox" name="song_ids" value="{{ item.id }}" {% if item.in_playlist %}checked{% endif %} style="transform: scale(1.5);">
                     </td>
                     {% else %}
+                    {% if user.is_authenticated and user.is_curator and search_type == 'song' %}
+                    <td class="song-index-cell" onclick="enableSongEdit({{ item.id }}, event)" style="width: 30px; cursor: pointer; text-align: center;">
+                        <span class="song-number">#{{ forloop.counter }}</span>
+                        <img src="{% static 'edit.png' %}" class="song-edit-icon" style="display: none; width: 16px; height: 16px;" alt="Edit">
+                    </td>
+                    {% else %}
                     <td>#{{ forloop.counter }}</td>
+                    {% endif %}
                     {% endif %}
 
                     <td>
@@ -145,9 +153,27 @@
                             <span class="catalog-row-genre">Ruolo: {{ item.get_role_display|default:item.role }}</span>
                             <span class="catalog-row-artist">{{ item.playlists.count }} playlist create</span>
                             {% else %}
-                            <span class="catalog-row-title">{{ item.title }}</span>
-                            <span class="catalog-row-genre">{{ item.genre.name }}</span>
-                            <span class="catalog-row-artist">{{ item.artist.name }}</span>
+                            <div id="display-song-{{ item.id }}" style="display: flex; flex: 1; justify-content: space-between;">
+                                <span class="catalog-row-title">{{ item.title }}</span>
+                                <span class="catalog-row-genre">{{ item.genre.name }}</span>
+                                <span class="catalog-row-artist">{{ item.artist.name }}</span>
+                            </div>
+                            {% if user.is_authenticated and user.is_curator and not adding_to_playlist %}
+                            <form method="post" action="{% url 'admin_song_update' item.id %}" id="edit-form-{{ item.id }}" style="margin: 0; width: 100%; display: none; gap: 10px;" oninput="checkSongUpdateUniqueness({{ item.id }})">
+                                {% csrf_token %}
+                                <input type="text" id="song-title-input-{{ item.id }}" name="title" value="{{ item.title }}" required style="flex: 2; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <select name="genre" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    {% for g in all_genres %}
+                                    <option value="{{ g.id }}" {% if g.id == item.genre.id %}selected{% endif %}>{{ g.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select id="song-artist-select-{{ item.id }}" name="artist" required style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onchange="checkSongUpdateUniqueness({{ item.id }})">
+                                    {% for a in all_artists %}
+                                    <option value="{{ a.id }}" {% if a.id == item.artist.id %}selected{% endif %}>{{ a.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </td>
@@ -173,11 +199,16 @@
                             <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo genere e tutti i brani associati?');">Elimina</button>
                         </form>
                         {% elif search_type == 'song' %}
-                        <form method="post" action="{% url 'admin_song_delete' item.id %}" style="margin:0; display: inline-block;">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo brano?');">Elimina</button>
-                        </form>
+                        <div id="display-btn-{{ item.id }}" style="display: inline-block;">
+                            <form method="post" action="{% url 'admin_song_delete' item.id %}" style="margin:0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="red-btn" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation(); return confirm('Sei sicuro di voler eliminare definitivamente questo brano?');">Elimina</button>
+                            </form>
+                        </div>
+                        <div id="edit-btn-{{ item.id }}" style="display: none;">
+                            <button type="submit" form="edit-form-{{ item.id }}" class="light-btn border" style="padding: 5px 15px; font-size: 14px; position: relative; z-index: 10;" onclick="event.stopPropagation();">Salva</button>
+                        </div>
                         {% endif %}
                     </td>
                     {% endif %}
@@ -232,6 +263,31 @@
         const artistId = artistSelect.value;
         
         const exists = existingSongs.some(s => s.title.toLowerCase() === title && s.artist_id === artistId);
+        if (exists) {
+            titleInput.setCustomValidity("Canzone già esistente, cambia titolo o artista.");
+        } else {
+            titleInput.setCustomValidity("");
+        }
+    }
+
+    function enableSongEdit(id, event) {
+        if (event) event.stopPropagation();
+        document.getElementById('display-song-' + id).style.display = 'none';
+        const editForm = document.getElementById('edit-form-' + id);
+        editForm.style.display = 'flex';
+        document.getElementById('display-btn-' + id).style.display = 'none';
+        document.getElementById('edit-btn-' + id).style.display = 'block';
+    }
+
+    function checkSongUpdateUniqueness(id) {
+        const titleInput = document.getElementById('song-title-input-' + id);
+        const artistSelect = document.getElementById('song-artist-select-' + id);
+        if (!titleInput || !artistSelect) return;
+        
+        const title = titleInput.value.trim().toLowerCase();
+        const artistId = artistSelect.value;
+        
+        const exists = existingSongs.some(s => s.id !== id && s.title.toLowerCase() === title && s.artist_id === artistId);
         if (exists) {
             titleInput.setCustomValidity("Canzone già esistente, cambia titolo o artista.");
         } else {

@@ -23,7 +23,7 @@
         <h1 id="title-display">{{ title }}</h1>
         <div id="meta-display" class="item-meta" style="color: #666;">
             {% if cover_type == 'artist' %}
-            {% for item in items|slice:":3" %}{{ item.genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            {{ artist_genres }}
             {% else %}
             {{ subtitle }}
             {% endif %}
@@ -77,6 +77,11 @@
         {% csrf_token %}
         <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questo artista e tutti i suoi brani?')">Elimina</button>
     </form>
+    {% elif cover_type == 'genre' %}
+    <form method="post" action="{% url 'admin_genre_delete' title %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questo genere e tutti i suoi brani?')">Elimina</button>
+    </form>
     {% endif %}
 </div>
 {% endif %}
@@ -98,6 +103,7 @@
                         {% else %}
                         <span class="catalog-row-title" style="color: inherit; font-size: inherit; font-weight: inherit;">Titolo</span>
                         <span class="catalog-row-genre" style="color: inherit; font-size: inherit; font-weight: inherit;">Genere</span>
+                        <span class="catalog-row-artist" style="color: inherit; font-size: inherit; font-weight: inherit;">Artista</span>
                         {% endif %}
                     </div>
                 </th>
@@ -116,6 +122,7 @@
                         {% else %}
                         <span class="catalog-row-title">{{ item.title }}</span>
                         <span class="catalog-row-genre" style="color: #666;">{{ item.genre.name }}</span>
+                        <span class="catalog-row-artist" style="color: #666;">{{ item.artist.name }}</span>
                         {% endif %}
                     </div>
                 </td>
