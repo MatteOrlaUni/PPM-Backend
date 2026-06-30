@@ -40,4 +40,4 @@ class Playlist(models.Model):
     songs = models.ManyToManyField(Song, related_name='playlists', blank=True)
 
     def __str__(self):
-        return f"{self.name} by {self.user.username}"
+        return f"{self.name} di {self.user.username}"

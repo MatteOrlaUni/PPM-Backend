@@ -41,6 +41,15 @@
                 <label>Nuova Password</label>
                 <input type="text" name="password" placeholder="Inserisci per cambiarla..." class="form-control border">
             </div>
+            {% if request.user.is_curator %}
+            <div class="form-group">
+                <label>Ruolo</label>
+                <select name="role" class="form-control-select border" style="width: 100%;">
+                    <option value="listener" {% if target_user.role == 'listener' %}selected{% endif %}>Listener</option>
+                    <option value="curator" {% if target_user.role == 'curator' %}selected{% endif %}>Curator</option>
+                </select>
+            </div>
+            {% endif %}
             {% else %}
             <div class="form-group">
                 <label>Nome</label>

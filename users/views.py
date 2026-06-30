@@ -75,6 +75,7 @@ class UserDetailView(LoginRequiredMixin, TemplateView):
         context['can_edit'] = self.request.user.is_curator() or self.request.user == user
         context['can_remove_item'] = False
         context['edit_url'] = reverse('user_edit_inline', args=[user.username])
+        context['target_user'] = user
         context['list_title'] = "Playlist"
         return context
 
@@ -99,6 +100,12 @@ class UserEditInlineView(LoginRequiredMixin, View):
                 # Keep user logged in if they changed their own password
                 if request.user == user:
                     login(request, user)
+                    
+            new_role = request.POST.get('role')
+            if new_role and request.user.is_curator() and new_role in ['listener', 'curator']:
+                if user.role != new_role:
+                    user.role = new_role
+                    updated = True
                     
             if updated:
                 user.save()

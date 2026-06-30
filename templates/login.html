@@ -43,11 +43,6 @@
                     <a href="{% url 'main' %}" class="light-btn border">Annulla</a>
                     <button type="submit" class="dark-btn border">Accedi</button>
                 </div>
-                
-                <div style="margin-top: 20px; font-size: 14px; color: #666;">
-                    <p style="margin: 0;"><strong>Curator:</strong> utente1 / password1</p>
-                    <p style="margin: 0;"><strong>Listener:</strong> utente2 / password2</p>
-                </div>
             </form>
         </div>
 
@@ -67,17 +62,24 @@
                 {% for field in signup_form %}
                 <div class="form-group">
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {% if field.name == 'role' %}
-                    <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control-select border" style="width: 100%;" required>
-                        <option value="listener">Listener</option>
-                        <option value="curator">Curator</option>
-                    </select>
-                    {% else %}
                     <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.name }}"
                         id="{{ field.id_for_label }}" class="form-control border" required>
-                    {% endif %}
                     {% for error in field.errors %}
-                    <p style="color: red; font-size: 0.8rem;">{{ error }}</p>
+                    <p style="color: red; font-size: 0.8rem;">
+                        {% if "This password is too short" in error %}
+                            Questa password è troppo corta. Deve contenere almeno 4 caratteri.
+                        {% elif "entirely numeric" in error %}
+                            Questa password è formata solo da numeri.
+                        {% elif "too common" in error %}
+                            Questa password è troppo comune.
+                        {% elif "too similar" in error %}
+                            La password è troppo simile alle tue informazioni personali.
+                        {% elif "didn't match" in error or "didn’t match" in error or "don't match" in error %}
+                            Le due password non corrispondono.
+                        {% else %}
+                            {{ error }}
+                        {% endif %}
+                    </p>
                     {% endfor %}
                 </div>
                 {% endfor %}
@@ -116,5 +118,10 @@
             btnLogin.style.borderBottom = '4px solid transparent';
         }
     }
+
+    // Imposta automaticamente il tab corretto al caricamento della pagina
+    window.onload = function() {
+        showTab('{{ active_tab|default:"login" }}');
+    };
 </script>
 {% endblock %}

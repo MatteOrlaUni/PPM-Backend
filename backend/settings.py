@@ -63,8 +63,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'it'
+TIME_ZONE = 'Europe/Rome'
 USE_I18N = True
 USE_TZ = True
 
@@ -72,7 +72,6 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'css',
-    BASE_DIR / 'js',
     BASE_DIR / 'assets'
 ]
 
