@@ -58,17 +58,21 @@
 
 {% if can_edit %}
 <div class="action-buttons" id="action-buttons" style="margin-bottom: 30px; justify-content: flex-start;">
-    <button class="light-btn border" onclick="toggleEdit()">Modifica</button>
+    <button class="light-btn border" {% if cover_type == 'playlist' and not is_owner %}disabled title="Non puoi modificare le playlist altrui" style="opacity: 0.5; cursor: not-allowed;"{% else %}onclick="toggleEdit()"{% endif %}>Modifica</button>
     {% if item_type == 'song' and cover_type == 'playlist' %}
+    {% if is_owner %}
     <a href="{% url 'catalog_list' %}?add_to_playlist={{ playlist_id }}" class="light-btn border">Modifica Brani</a>
+    {% else %}
+    <button disabled title="Non puoi modificare le playlist altrui" class="light-btn border" style="opacity: 0.5; cursor: not-allowed;">Modifica Brani</button>
+    {% endif %}
     {% endif %}
     {% if cover_type == 'playlist' %}
     <form method="post" action="{% url 'playlist_delete' playlist_id %}" style="margin: 0;">
         {% csrf_token %}
-        <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questa playlist?')">Elimina</button>
+        <button type="submit" class="red-btn" {% if not is_owner %}disabled title="Non puoi eliminare le playlist altrui" style="opacity: 0.5; cursor: not-allowed;"{% else %}onclick="return confirm('Sei sicuro di voler eliminare questa playlist?')"{% endif %}>Elimina</button>
     </form>
     {% elif cover_type == 'user' %}
-    <form method="post" action="{% url 'user_delete' %}" style="margin: 0;">
+    <form method="post" action="{% if title == user.username %}{% url 'user_delete' %}{% else %}{% url 'admin_user_delete' title %}{% endif %}" style="margin: 0;">
         {% csrf_token %}
         <button type="submit" class="red-btn" onclick="return confirm('Sei sicuro di voler eliminare questo profilo?')">Elimina</button>
     </form>

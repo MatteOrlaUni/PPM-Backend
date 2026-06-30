@@ -1,34 +1,35 @@
-# Sonify - Music Streaming Service
+# PPM - Secondo parziale
 
-**Studente:** Orlandi Matteo (Modificare con i nomi effettivi se gruppo)
+**Studente:** Orlandi Matteo
 
 ## Project Information
-- **Chosen project type:** Full-Stack Web Application (Track 4: Music Streaming Service)
-- **Framework used:** Django
+- **Tipologia progetto:** Full-Stack Web Application, traccia 4: Servizio di musica in streaming
+- **Framework utilizzato:** Django
 
-## Short Description
-Sonify è un'applicazione web full-stack per la gestione di un catalogo musicale in streaming. Permette agli utenti di esplorare brani musicali, visualizzare i generi disponibili, e ai curatori di gestire l'aggiunta di nuove tracce audio al sistema, simulando un vero e proprio servizio di Music Streaming.
+## Descrizione
+Questa applicazione permette agli utenti di esplorare brani musicali, visualizzare artisti e generi, creare le proprie playlist personalizzate e gestire il proprio profilo.
 
-## Implemented Features
-L'applicazione implementa un sistema di permessi basato sui ruoli tramite un modello `CustomUser`.
+## Ruoli
 
-**Listener (Standard User):**
-- Navigazione libera della Home page e del catalogo musicale completo.
-- Visualizzazione dei dettagli delle singole tracce (Titolo, Artista, Genere, Durata).
-- Reindirizzamento e ascolto tramite link esterni (simulazione streaming).
+**Listener (utente comune):**
+- **Navigazione:** Accesso libero alla Home page e a tutto il catalogo musicale.
+- **Ricerca e Filtri:** Ricerca testuale dinamica per Brani, Artisti, Generi e Utenti.
+- **Playlist:** Creazione, visualizzazione, modifica del nome e cancellazione delle proprie playlist. Aggiunta e rimozione di brani.
+- **Profilo:** Modifica delle proprie credenziali (username e password) ed eliminazione del proprio account.
 
-**Curator (Manager/Admin):**
-- Tutte le funzionalità del Listener.
-- Aggiunta di nuovi brani al catalogo tramite form protetti (CreateView).
-- Gestione esclusiva delle entità del database.
+**Curator (amministratore):**
+- Tutte le funzionalità e i privilegi concessi al Listener.
+- **Gestione Catalogo (CRUD):** Aggiunta, modifica ed eliminazione di brani musicali, generi e artisti.
+- **Gestione Utenti:** Modifica e cancellazione degli account altrui.
+- **Pannello Admin:** Accesso totale al sistema e alla supervisione del database.
 
 ## Local Installation Instructions
 
-Per eseguire questo progetto localmente sulla propria macchina, seguire questi passaggi:
+Per testare questo progetto localmente, seguire i seguenti passaggi nel terminale:
 
 1. **Clonare la repository:**
    ```bash
-   git clone <INSERIRE_IL_LINK_DELLA_REPO>
+   git clone https://github.com/MatteOrlaUni/PPM-Backend
    cd PPM-Backend
    ```
 
@@ -49,36 +50,45 @@ Per eseguire questo progetto localmente sulla propria macchina, seguire questi p
    pip install -r requirements.txt
    ```
 
-4. **Avviare il server (Il database è già configurato e popolato):**
+4. **Avviare il server:**
+   *(Nota: Il database è già popolato, quindi non è necessario eseguire le migrazioni)*
    ```bash
    python manage.py runserver
    ```
    Visitare `http://127.0.0.1:8000/` nel browser.
 
 ## Database
-Il progetto include il file `db.sqlite3` pre-popolato. 
-Confermo che il database contiene dati demo realistici (generi, canzoni, playlist) sufficienti per testare immediatamente tutti i workflow principali del progetto senza dover creare nulla da zero.
+Il progetto include il file `db.sqlite3` pre-popolato in root.
 
 ## Demo Accounts
-Di seguito sono elencati gli account di prova per testare le funzionalità e i permessi dell'applicazione:
+Account per il testing:
 
-- **Admin/Superuser**
-  - Username: `admin_demo`
-  - Password: `admin12345`
-  - Role: Amministratore di sistema (Accesso totale)
+- **amministratore:** utente1 / password1
+- **utente comune:** utente2 / password2
 
-- **Curator**
-  - Username: `manager_demo`
-  - Password: `manager12345`
-  - Role: Curator (Può aggiungere e gestire canzoni)
+## Scenario di test
 
-- **Listener**
-  - Username: `user_demo`
-  - Password: `user12345`
-  - Role: Listener (Accesso in sola lettura al catalogo)
+Di seguito sono descritte le operazioni consentite in base allo stato di autenticazione e al ruolo dell'utente:
+
+1. **Utente Non Autenticato (Anonimo)**
+   - **Funzioni utilizzabili:** Può esclusivamente visualizzare la pagina di login/registrazione e visitare il catalogo. Per la gestione delle playlist è necessario almeno un account base.
+
+2. **Utente loggato come "utente comune" (Listener)**
+   - **Collegamenti visibili:** Home, Catalogo, Le mie Playlist, Profilo e Logout.
+   - **Funzioni utilizzabili:** 
+     - Sfogliare l'intero catalogo musicale (brani, artisti, generi) e ricercare elementi tramite la barra di ricerca.
+     - Creare, rinominare ed eliminare le proprie playlist personali.
+     - Aggiungere e rimuovere brani dalle proprie playlist.
+     - Modificare i dati del proprio profilo (username, password) ed eliminare l'account.
+
+3. **Utente loggato come "amministratore" (Curator)**
+   - **Collegamenti visibili:** Tutti i collegamenti dell'utente comune, con l'aggiunta della sezione "Utenti" e delle operazioni CRUD di ogni elemento del catalogo.
+   - **Funzioni utilizzabili:**
+     - Tutte le funzioni concesse all'utente comune.
+     - **CRUD Catalogo:** Aggiungere nuovi brani, artisti e generi tramite form. Modificare il nome, il genere o l'artista di brani esistenti. Eliminare definitivamente elementi dal database.
+     - **Gestione Utenti:** Cercare e visualizzare profili di altri utenti nella scheda "Utenti" del catalogo. Eliminare e modificare le informazioni di una account di un qualsiasi utente.
+     - **Limitazioni:** Non può modificare o eliminare le playlist altrui.
 
 ## Online Deployment
-- **Deployment URL:** [INSERIRE_LINK_DEPLOYMENT] (Es. Render, PythonAnywhere, Railway)
+- **Deployment URL:** https://matteorlauni.pythonanywhere.com
 
----
-*Progetto sviluppato per il corso di Back-end PPM 2026.*

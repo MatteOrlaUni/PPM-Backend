@@ -6,59 +6,8 @@ from django.urls import reverse, resolve
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Q
-from django.contrib.auth import get_user_model, login, logout
-from django.contrib.auth.forms import AuthenticationForm
-from django.http import JsonResponse
+from django.contrib.auth import get_user_model
 from .models import Song, Genre, Playlist, Artist
-from .forms import CustomUserCreationForm
-
-def auth_view(request):
-    next_url = request.GET.get('next') or request.POST.get('next') or 'main'
-    
-    if request.user.is_authenticated:
-        return redirect(next_url)
-        
-    login_form = AuthenticationForm(request)
-    signup_form = CustomUserCreationForm()
-    active_tab = 'login'
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'login':
-            login_form = AuthenticationForm(request, data=request.POST)
-            if login_form.is_valid():
-                user = login_form.get_user()
-                login(request, user)
-                return redirect(next_url)
-        elif action == 'signup':
-            active_tab = 'signup'
-            signup_form = CustomUserCreationForm(request.POST)
-            if signup_form.is_valid():
-                user = signup_form.save()
-                login(request, user)
-                return redirect(next_url)
-                
-    context = {
-        'login_form': login_form,
-        'signup_form': signup_form,
-        'active_tab': active_tab,
-        'next': request.GET.get('next', ''),
-    }
-    return render(request, 'login.html', context)
-
-def custom_logout_view(request):
-    referer = request.META.get('HTTP_REFERER')
-    logout(request)
-    if referer:
-        try:
-            path = urllib.parse.urlparse(referer).path
-            match = resolve(path)
-            public_views = ['main', 'catalog_list', 'artist_detail', 'genre_detail']
-            if match.url_name in public_views:
-                return redirect(referer)
-        except Exception:
-            pass
-    return redirect('main')
 
 class HomeView(TemplateView):
     template_name = 'main.html'
@@ -90,15 +39,17 @@ class CatalogListView(ListView):
             if q:
                 queryset = queryset.filter(username__icontains=q)
         else: # song
+            search_type = 'song'
             queryset = Song.objects.all().order_by('-created_at')
             if q:
                 queryset = queryset.filter(Q(title__icontains=q) | Q(artist__name__icontains=q) | Q(genre__name__icontains=q))
         
+        self.valid_search_type = search_type
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['search_type'] = self.request.GET.get('type', 'song')
+        context['search_type'] = getattr(self, 'valid_search_type', 'song')
         context['q'] = self.request.GET.get('q', '')
         
         playlist_id = self.request.GET.get('add_to_playlist')
@@ -142,6 +93,7 @@ class PlaylistDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context['item_type'] = 'song'
         context['can_edit'] = playlist.user == self.request.user or self.request.user.is_curator()
         context['can_remove_item'] = playlist.user == self.request.user
+        context['is_owner'] = playlist.user == self.request.user
         context['edit_url'] = reverse('playlist_edit_inline', args=[playlist.id])
         context['playlist_id'] = playlist.id
         context['existing_names'] = json.dumps(list(Playlist.objects.filter(user=playlist.user).exclude(id=playlist.id).values_list('name', flat=True)))
@@ -158,12 +110,19 @@ class PlaylistDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
 class PlaylistEditInlineView(LoginRequiredMixin, View):
     def post(self, request, pk):
         playlist = get_object_or_404(Playlist, pk=pk)
-        if playlist.user == request.user or request.user.is_curator():
+        if playlist.user == request.user:
             new_title = request.POST.get('new_title')
             if new_title and new_title != playlist.name:
                 if not Playlist.objects.filter(user=playlist.user, name=new_title).exists():
                     playlist.name = new_title
                     playlist.save()
+                    messages.success(request, "Playlist rinominata con successo.")
+                else:
+                    messages.error(request, "Hai già una playlist con questo nome.")
+            elif new_title == "":
+                messages.error(request, "Il nome della playlist non può essere vuoto.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         return redirect('playlist_detail', pk=pk)
 
 class PlaylistCreateView(LoginRequiredMixin, View):
@@ -179,7 +138,7 @@ class PlaylistCreateView(LoginRequiredMixin, View):
 class PlaylistDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk):
         playlist = get_object_or_404(Playlist, pk=pk)
-        if playlist.user == request.user or request.user.is_curator():
+        if playlist.user == request.user:
             playlist.delete()
             messages.success(request, "Playlist eliminata con successo.")
         else:
@@ -233,14 +192,23 @@ class ArtistEditInlineView(LoginRequiredMixin, View):
         if request.user.is_curator():
             new_name = request.POST.get('new_title')
             if new_name and new_name != name:
-                artist.name = new_name
-                artist.save()
-                return redirect('artist_detail', name=new_name)
+                if not Artist.objects.filter(name=new_name).exists():
+                    artist.name = new_name
+                    artist.save()
+                    messages.success(request, "Artista rinominato con successo.")
+                    return redirect('artist_detail', name=new_name)
+                else:
+                    messages.error(request, "Esiste già un artista con questo nome.")
+            elif new_name == "":
+                messages.error(request, "Il nome dell'artista non può essere vuoto.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         return redirect('artist_detail', name=name)
 
 class AdminArtistDeleteView(LoginRequiredMixin, View):
     def post(self, request, name):
         if not request.user.is_curator():
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
             return redirect('main')
             
         artist = get_object_or_404(Artist, name=name)
@@ -277,87 +245,26 @@ class GenreEditInlineView(LoginRequiredMixin, View):
         if request.user.is_curator():
             new_name = request.POST.get('new_title')
             if new_name and new_name != name:
-                genre.name = new_name
-                genre.save()
-                return redirect('genre_detail', name=new_name)
+                if not Genre.objects.filter(name=new_name).exists():
+                    genre.name = new_name
+                    genre.save()
+                    messages.success(request, "Genere rinominato con successo.")
+                    return redirect('genre_detail', name=new_name)
+                else:
+                    messages.error(request, "Esiste già un genere con questo nome.")
+            elif new_name == "":
+                messages.error(request, "Il nome del genere non può essere vuoto.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         return redirect('genre_detail', name=name)
 
 
-class UserDetailView(LoginRequiredMixin, TemplateView):
-    template_name = 'item.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        username = self.kwargs['username']
-        user = get_object_or_404(get_user_model(), username=username)
-        playlists = Playlist.objects.filter(user=user)
-        context['title'] = user.username
-        context['subtitle'] = f"{playlists.count()} playlist pubbliche"
-        context['cover_type'] = 'user'
-        context['type_label'] = f"Utente - {user.role.title()}"
-        context['items'] = playlists
-        context['item_type'] = 'playlist'
-        context['can_edit'] = self.request.user.is_curator() or self.request.user == user
-        context['can_remove_item'] = False
-        context['edit_url'] = reverse('user_edit_inline', args=[user.username])
-        context['list_title'] = "Playlist"
-        return context
-
-class UserEditInlineView(LoginRequiredMixin, View):
-    def post(self, request, username):
-        user = get_object_or_404(get_user_model(), username=username)
-        if request.user.is_curator() or request.user == user:
-            new_username = request.POST.get('new_title')
-            new_password = request.POST.get('password')
-            
-            updated = False
-            if new_username and new_username != username:
-                if not get_user_model().objects.filter(username=new_username).exists():
-                    user.username = new_username
-                    updated = True
-                else:
-                    messages.error(request, "Username già in uso.")
-            
-            if new_password:
-                user.set_password(new_password)
-                updated = True
-                # Keep user logged in if they changed their own password
-                if request.user == user:
-                    login(request, user)
-                    
-            if updated:
-                user.save()
-                return redirect('user_detail', username=user.username)
-
-        return redirect('user_detail', username=username)
-
-class UserDeleteView(LoginRequiredMixin, View):
-    def post(self, request):
-        user = request.user
-        logout(request)
-        user.delete()
-        return redirect('main')
-
-class AdminUserDeleteView(LoginRequiredMixin, View):
-    def post(self, request, username):
-        if not request.user.is_curator():
-            return redirect('main')
-            
-        target_user = get_object_or_404(get_user_model(), username=username)
-        # Prevent deleting yourself through this route just in case
-        if target_user == request.user:
-            return redirect('catalog_list')
-            
-        target_user.delete() # Playlists will be deleted on cascade
-        
-        next_url = request.POST.get('next')
-        if next_url:
-            return redirect(next_url)
-        return redirect('catalog_list')
 
 class AdminGenreDeleteView(LoginRequiredMixin, View):
     def post(self, request, name):
         if not request.user.is_curator():
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
             return redirect('main')
             
         genre = get_object_or_404(Genre, name=name)
@@ -371,6 +278,7 @@ class AdminGenreDeleteView(LoginRequiredMixin, View):
 class AdminSongDeleteView(LoginRequiredMixin, View):
     def post(self, request, id):
         if not request.user.is_curator():
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
             return redirect('main')
             
         song = get_object_or_404(Song, id=id)
@@ -386,7 +294,15 @@ class AdminArtistCreateView(LoginRequiredMixin, View):
         if request.user.is_curator():
             name = request.POST.get('name')
             if name:
-                Artist.objects.get_or_create(name=name)
+                _, created = Artist.objects.get_or_create(name=name)
+                if created:
+                    messages.success(request, "Artista aggiunto al catalogo.")
+                else:
+                    messages.error(request, "Questo artista è già presente.")
+            else:
+                messages.error(request, "Il nome dell'artista non può essere vuoto.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         return redirect('/catalogue/?type=artist')
 
 class AdminGenreCreateView(LoginRequiredMixin, View):
@@ -394,7 +310,15 @@ class AdminGenreCreateView(LoginRequiredMixin, View):
         if request.user.is_curator():
             name = request.POST.get('name')
             if name:
-                Genre.objects.get_or_create(name=name)
+                _, created = Genre.objects.get_or_create(name=name)
+                if created:
+                    messages.success(request, "Genere aggiunto al catalogo.")
+                else:
+                    messages.error(request, "Questo genere è già presente.")
+            else:
+                messages.error(request, "Il nome del genere non può essere vuoto.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         return redirect('/catalogue/?type=genre')
 
 class AdminSongCreateView(LoginRequiredMixin, View):
@@ -409,8 +333,15 @@ class AdminSongCreateView(LoginRequiredMixin, View):
                     genre = Genre.objects.get(id=genre_id)
                     if not Song.objects.filter(title__iexact=title, artist=artist).exists():
                         Song.objects.create(title=title, artist=artist, genre=genre)
+                        messages.success(request, "Canzone aggiunta al catalogo.")
+                    else:
+                        messages.error(request, "Questo brano esiste già per l'artista selezionato.")
                 except (Artist.DoesNotExist, Genre.DoesNotExist, ValueError):
-                    pass
+                    messages.error(request, "I dati dell'artista o del genere non sono validi.")
+            else:
+                messages.error(request, "Compila tutti i campi richiesti.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         return redirect('/catalogue/?type=song')
 
 class AdminSongUpdateView(LoginRequiredMixin, View):
@@ -430,8 +361,15 @@ class AdminSongUpdateView(LoginRequiredMixin, View):
                         song.artist = artist
                         song.genre = genre
                         song.save()
+                        messages.success(request, "Canzone aggiornata.")
+                    else:
+                        messages.error(request, "Esiste già un'altra canzone con questo titolo per l'artista selezionato.")
                 except (Artist.DoesNotExist, Genre.DoesNotExist, ValueError):
-                    pass
+                    messages.error(request, "I dati dell'artista o del genere non sono validi.")
+            else:
+                messages.error(request, "Compila tutti i campi richiesti per aggiornare.")
+        else:
+            messages.error(request, "Azione non consentita. Privilegi insufficienti.")
         next_url = request.POST.get('next')
         if next_url:
             return redirect(next_url)

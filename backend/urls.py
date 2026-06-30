@@ -1,11 +1,8 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
     path('', views.HomeView.as_view(), name='main'),
-    
-    path('login/', views.auth_view, name='login'),
-    path('logout/', views.custom_logout_view, name='logout'),
     
     path('catalogue/', views.CatalogListView.as_view(), name='catalog_list'),
     path('admin/song/create/', views.AdminSongCreateView.as_view(), name='admin_song_create'),
@@ -30,8 +27,5 @@ urlpatterns = [
     path('admin/genre/create/', views.AdminGenreCreateView.as_view(), name='admin_genre_create'),
     path('admin/genre/<str:name>/delete/', views.AdminGenreDeleteView.as_view(), name='admin_genre_delete'),
 
-    path('user/<str:username>/', views.UserDetailView.as_view(), name='user_detail'),
-    path('user/<str:username>/edit_inline/', views.UserEditInlineView.as_view(), name='user_edit_inline'),
-    path('user/delete', views.UserDeleteView.as_view(), name='user_delete'),
-    path('admin/user/<str:username>/delete/', views.AdminUserDeleteView.as_view(), name='admin_user_delete'),
+    path('', include('users.urls')),
 ]
